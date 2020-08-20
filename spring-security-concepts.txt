@@ -1,0 +1,107 @@
+- spring security uses filters for implmentation 
+- A filter is called even before dispatcher servlet
+- different kind of filters are there for different secutiry concersn like -> login, logout, remmber me, authentication, authroization etc
+- These chain of filters are called by differnt proxies
+- We only configure a single delegation filter proxy whihc calls objects of Filter chain proxy
+	-> this filter chain proxy is used to call different kind of filter chains(set of filters called one by one for authentication,auto=hrization, remmber me etc)
+	-> we need different chain of filters so that one is for google auth, other for facebook auth etc
+	-> job of delegation proxy which we configure is to pick correct set of filter chains
+
+Object heirachy in spring secutiry
+		Http Session
+		security context
+		authentication object
+	principal		authorization (roles)
+So onece user logs in in httpsession we create object of securitycontext , in this we have authentication object whihc have authoirization object(details like user role)
+		and principal(user details)
+- Priciapl is basically an object that have user details for logged in user only
+- For a logged in user the springcontext object whill be present in http session , if in httpsesion security context object is null means user is anonymous
+		
+
+- Using autoconfiguration spring boot adds basic login page and allow default user as username and random generated varchar as password , just by adding spring started security depenedency
+
+Set of filters in spring security oob:
+a. Spring context filter -> job of this is to create spring secucrity context , in case it is present in session just use that for populating in thread local
+b. logout filter , used only when logout endpoint is called by client.
+c. remmber me filter: This is used for storing remmber me cookie to handle remmber me funtionality
+d. AuthenticationFilter : This is used to load users based on authentication provider like LDAP, in memory(default either set ina pplication.prpeorties or in configurer adapter)
+		, JDBC authentication provider, it cheks if user credentials are correct and in case of wrong crednetials it gives exception	
+		-> in case of correct crednetials it create authentication object, put data like username c, passwword,login date etc in princiapl object and also put authority(roles) based on what is present in data base/in memeory provider
+e. Security filter interceptor : This is used to check if the required resource is secured or not and if yes it check if created principal's role is valid for the api using requestMatcher
+
+
+@conditionalOnclass(class2.class) annotation will inject the class only if class2.class is there in classpath
+@conditionalOnBean(Class2.class) annotation will injec the main class only if there is a Bean defined by us with name Class2 is created by us 
+
+- Any configuration in spring security is done by using WebsecurityConfigurationAdapter class and overiding it for cusomization
+- By default it is configured for any request to be secured
+- by default inmemory authenticationprovider is used with user as username and password as random varchar
+
+Types of authencitacion
+a. form authentication: type of basic authentication that needs username and password -> a html form will be neede with username and password
+b. httpbasic: type of basic authentication that needs username and password -> a popup will showup with username and password
+	-> difference is that in formbasic we call post api /login and put username and password in rquest body
+	-> in httpbasic popup will show instead of forma and hecne it will pass username:password as base64 encoded string in header named Authorization with value Basic encrypted username:passwrod string
+
+Digest authrntication:
+It is an advacned form of basic authentication where username and password are sent using basic auth but they are hased using a nonce -> number once
+	once login popup is shown server provides a real of digest with some name in realm and a nonce string(the same string will be generated only once)
+	The combination of usernme , password and real are hashed using nonce string and then passed as authroization header with value Digest response....
+- This is more secure and specially when we are using http instead of https we can use it , however very few clinets uses it
+
+-> we can create multiple filters/interceptors and sequence is manged by @order
+minimum order gets called once and so on
+
+
+- We can use JDBCAuthenticationPRovider to save user details in jdbc and use those in authentication manager -> to authenticate the users and roles
+- We need to use Bcrypt password encoder for that as we might save passwrod encrypted or non encrypted
+	-> {noop} prefix shall be used for non encrypted in password column value of data base
+	-> {brcypt} prefix shall be used for encrypted password in password column value of data base
+default table names -> users -> columns username, password, first_name,last_name,enabled
+			authorities -> columns username,authority
+
+- CSRF : cross site request forgery
+	-> generally browser stores cookies for site having jsessionid
+	-> every time browser request it passes the cookie value from jsessionid
+	-> however if some one goes to malicious site it can hack and get this session id from browser cooki
+		-> it can misues this browser cookie jsession id by passing it to our site and can create scripts whihc calls thousands of time
+		-> this can lead to server overload and might stop/kill the server
+- Spring enables a filter calles crosssiteRequestForgeryfilter -> CSRFFilter
+	-> it is enabeld by default and everytime we use a form login/ formbasic authentication it expectes a hidden filed of _csrf_value
+	-> when a no logged in user comes it get a random genrated value form server/filter 
+	->< this has to be passed as _csrf token hidden paramter alson with username/password and jsession id
+	-> in spring thymeleaf/login oob page it is present by default
+	-? if we do not pass this scrd hidden value in formbasic authentication the filter blocks such request
+	-> so good choice is whenever using spring secutiry ofr login always pass _csrf_tiken hiddne paramter alon with username and password as method body
+	-> we can disable it at webmvconfigurereadpater level
+
+- In short secutiry uses digest basic authentication to support forgery in httpbasic authentication(that uses popup based/xframe based pages for login -> username:pass stirng is base64 encrypted and passed as authorization header -> value -> Basic base64(uname:pass))
+- In case of form basic authenticaiton they uses csrf for - >in each form login we have to pass hidden csrf token (generated ny csrf filter) as hidden filed -> thymeleaf do it automatically
+	-> if this is not present CSRF filter will block the call
+
+How HTTPs works
+- Https works with http+ssl concetp
+	-> ssl mean secured socket layer
+	-> it uses combination of symmetric and asymmetric encryption
+	->during ssl handshake(certificate transfer and contractural random string creation phase) use asymmetric encryption
+	->rest of the communication betwenn server and client happens using symmtertic encryption
+
+Steps
+a. A browser requests for a server using https protocol
+b. Server sends the certificate(containn server owner details, address etc  and a public key),
+c. Client generates  a random session key and encrypt it using this public key, this can not be encrypted using the same public key
+d. This random string encrypted fomrated can only be decrypted using private key kept only in server
+e. Server uses private key to decrypt and get this random string action as session id
+f. the above steps are called ssl handshake
+g. From no onwards user can share data after encrypting with this random string key and also server can use the same random sesion key to decrypt the data
+h. Server can use the same key to encrypt and send data whihc can be decrypted by client using same random session id key
+Java provides a tool call keytool to generate public and private key in a file ending with .jsk -> java store key
+
+Server need to have acces of this to get public key whihc will be shared with others
+-> private key form the key store will be used for decrypting at server end during ssl handshake phase
+
+keytool -genkey -alias radhakrishna -storetype PKCS12 -keyalg RSA -keysize 2048 -keystore mykeystore.p12
+
+If we setup ssl configurations like keystore location, alias, password , type of keys store etc
+	-> we can enable ssl /https 
+-> however if we want to forcefully redirect http to https we need to create connector bean for mebedded tomcat server
