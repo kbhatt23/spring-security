@@ -99,8 +99,7 @@ Java provides a tool call keytool to generate public and private key in a file e
 
 Server need to have acces of this to get public key whihc will be shared with others
 -> private key form the key store will be used for decrypting at server end during ssl handshake phase
-
-keytool -genkey -alias radhakrishna -storetype PKCS12 -keyalg RSA -keysize 2048 -keystore mykeystore.p12
+keytool -genkey -alias tomcat -storetype PKCS12 -keyalg RSA -keysize 2048 -keystore mykeystore.p12
 
 If we setup ssl configurations like keystore location, alias, password , type of keys store etc
 	-> we can enable ssl /https 
