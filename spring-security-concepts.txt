@@ -104,3 +104,10 @@ keytool -genkey -alias tomcat -storetype PKCS12 -keyalg RSA -keysize 2048 -keyst
 If we setup ssl configurations like keystore location, alias, password , type of keys store etc
 	-> we can enable ssl /https 
 -> however if we want to forcefully redirect http to https we need to create connector bean for mebedded tomcat server
+
+- We can store passwords/secrets in vault and use that by integrating spring cloud vault depenedny in spring boot project
+- Also we can use spring cloud config server to encrypt/decrypt assymetrically , save encypted things in git and it will automatically decrypted by springt cloud config server
+
+- spring cloud vault will work same like spring cloud config and give environment variables with the name mentioned in vault
+	spring.application.name should be same as the application.name added in vault
+- also just like spring cloud config we need to use bootstrap so that all the variables/secrets are fetched from vault and passed as environment variable -> can be consumed using ${varName}
