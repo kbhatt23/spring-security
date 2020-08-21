@@ -20,4 +20,12 @@ public class BasicAuthenticationConfig extends WebSecurityConfigurerAdapter{
 			//.formLogin().and()
 			.httpBasic();
 	}
+	//remmber me functionality
+	/*
+	 * @Override protected void configure(HttpSecurity http) throws Exception {
+	 * System.out.println("Using BasicAuthenticationConfig for security");
+	 * 
+	 * http .authorizeRequests() .anyRequest().authenticated() .and() .formLogin()
+	 * .and() .rememberMe().key("raghav-cookie") .and() .httpBasic() ; }
+	 */
 }
