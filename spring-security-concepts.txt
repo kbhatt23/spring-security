@@ -235,3 +235,9 @@ this new endpoint will expose the public key, we uses private key to encode the 
 	-> at startup of resource server we call this public key api and save it,
 	using thius we decode the signature and check if it has same value as payload body part of jwt(a.b.c) -> b is payload , a is header and c is signature
 	-> if both b and c matches we can use part b to check the role and token authentication
+
+
+Token relay:
+This means once the accesstoken for all the kind of grant type is set in security contect, authenticated and user prinicapl-> token
+	all the resttmplate(oauth2resttmeplate), webClient should fetch this automaticlly and clal the respurce server programmingcally
+- steps : just configure webclient in the clinet web app
