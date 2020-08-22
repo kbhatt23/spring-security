@@ -111,3 +111,119 @@ If we setup ssl configurations like keystore location, alias, password , type of
 - spring cloud vault will work same like spring cloud config and give environment variables with the name mentioned in vault
 	spring.application.name should be same as the application.name added in vault
 - also just like spring cloud config we need to use bootstrap so that all the variables/secrets are fetched from vault and passed as environment variable -> can be consumed using ${varName}
+
+vault commnad : vault server -config ./vault.hcl
+Remmber me functionality
+- Generally the session of a site data is stored in Jsession id
+- If we are logged in on a site/ maybe anonymous -> web server uses jsession id to understand whihc user is sending request and accordingly sends the data back
+- If we login then this jsession id is stored in storage cookie in browser , if this is present means user once logged in will be logged in that session and wont ask for password
+- But if we close the browser or manually delete this jsessionid cookie site will consider a anonymous user and will send to login page
+- In remmeber me functionality we create another cookie having username: password,: timestamp hashed value and even if we close the browser or remove the jsession id
+	-> a filter called remmbermefilter in filter chain proxy will check the value stored in cookie wiht that in D.B and if correct it manually logins the user and push Jsession id in cookie
+	-< this way we are able to remain logged in for days
+
+Oauth 2 :
+This is a protocl to restrict access of the resource apis created to clients
+	-> eg valet keys of car  hwihc is similar to main key of car but do not have access fo all the things like trunk, phone book ,car wont drive more than a mile etc
+there are 4 types ogf grnatn types in oauth2
+- resource access auuth grant types
+
+Good example is login to any web site using google/facebook
+There are 4 actoes: resource owner(user of google account), auth server , resource server(exposing functionalities like profile data, contact data, google photos etc), Client of Oauth server
+Flow goes like below:
+a. First of ownser of Client web site need to register to Google aouth server, by providing details lilke 
+	redirect url, scopes like what all kind of resource we might need(eg, photos,profile data etc) -> user will have to grant access out of these scopes only 
+	-> google provides clinet id and client secret
+b. resource ownser tries to login via google and gets redirected to google page
+c. resource owner puts username/password -> then it gets a page whihc asks user for grant based on scope provided during registration(like do u want to share profile, photos, account details from google)
+d. based on user selection of scope, google redirects to main client website and provide auth token
+e. client need to call aouth server with client id, client key, auth token and will reieve a access tocken (jwt) whihc will have limited time availability
+f. client can now call individual resoiurce apis by providing this access token
+g. resource server will pass this access token to auth server and gets response if it shud provide resource content
+h. once client site gets thjis data -> using spring securty filter it can create principal object and attach to authencatoio object and attach that to spring security context	
+-> which gets attached to http session and hen jsession id will be kept in browser cookie-> hence will be logged in for that session
+
+2nd type of oauth grant:
+2. Client grant access
+	Eg bookmysow client , once user have selected city it do not matter what scope user have chosen and hence we do not need to login resource owner at all
+	->when the apis are indepenedt of resource owner's act we can use this
+	->most commonly used
+	->just register with auth server and get client id and client secret
+	-> we can even have different roles/authroites to restrict what all resoiruce can be used for that clinet id
+	-> we directly pass clientid and clinetsecret to auth server and get auth token and directly pass that to indivudual resource server
+	-> resoruce server will pass this oauth token to auth server to validate if frant can be given and pass the data to client
+Basically in this user to login to another site get auth token, thn again get access token and then pass the access token to resoruce server are not needed as it is not dependent on indivdual user of resource owner
+
+We can implement resoruce owner grant using google oauth server
+Steps
+- Register with google console and provide redirect url,scopes and get clientid and clinet secret
+- In our custom login html we add a link for google login
+- In spring application.properties we can configure the id of this url in html to have cleitnid,client secret etc
+-> The Oauth2RedirectFilter will chcek for such urls and redirect to google auth login page.
+-> google will redirect to redirect url configured with auth token
+-> oauthAuthrnticationfilter will us ethis and passto oauthauthenticationmanager -> oauthauthenticationprovider whihc calls auth server with clientid,clien secretr and auth token
+	-> fetches acess tocke and set in user principal and attach to authntication object of spring security context
+	-> hence user remain logged in unitl jsession id cookie is present in browser
+-> we can even save this user in our own repo, this can be used for order capturing and other events related to that profiulke, like shoing orders , tickets etc
+
+Overall 3 types of grant types(mostly used)
+a. authroization_code : This is the first example wherer we actually get auth_token that can not be sued directly with resource server
+			-> we need to again call auth server to get accestoken and then get the data
+b. client_credentials: In this we just need to authenicate cleint, eg an api calling and consuming another resource serve
+			->	why to have user specific scopes, its always the same 
+			-> in this we directly get access_token that can be used while calling resource server
+c. password: Genearlly we also need authentication before authroization	
+		-> so if in middle clinet app we have username and password that also need to be put in request body for auth server call
+		-> also in headers we will have cleintid and clientSecret as usual
+		-> directly accesstoken can be used for reosurce server
+
+Access_Token : actual token that cna be used to call resource server
+auth_toekn: used in authrization code grant type to generate the accesstoekn based on need t
+
+Auth server exposes few endpoints and hence need web dependency
+- /oauth/token -> generate accesstokn/auth token based on provided grant type and if client id/clientsecret is accessible with that specific grant type
+- /oauth/authorize
+- /oauth/check_endpont  -=> if this is enebaled(by default it is bocked) we can pass token and see its details -> we need to configure in code to enable it
+in simple words in password type auth server handles both authentication(username and password store it contains) and authorization(clinent id and secret)
+
+Why To use JWT:
+- In normal cases the resource server have to call auth server to validate the token using check_token endpoint for its validtiy
+- So this adds a lot of netwrok calls when a lot of times api is used
+- JWT is called json web token -> it is self validatable content and if we use this resource server need not call auth server for token validation
+-> JWT have 3 parts , a.b.c  -> a is encoded version of a json for header , b is encoded version of payload(user details, token details etc)
+		c -> This is called signbature of the payload, this is used to validate if the JWT is not changed
+How signature validation works
+- > If a client and sserver are communicating, we can use asymmetric encryption technique
+		-> in this if we encrypt using public key then it can only be decrypted by private key
+		-> in case a content is encrypted using private key then it can only be decrypted by public key only
+-> so as part of signatrue we cna create digest of the content of payload(JWT) , if someone try to modify then once this digest incontent is decrypted using public key
+			-> then the digest data will be different from the payload
+-> similarly in JWT for aotuh 2 , we can keep private key in auth server , we can cretae JWT token -> with encrypted signature using private key(only public key can decrypt it)
+		-> once resource server get this jwt it can check if signature gets decrypted using pulbic key to a valid conent(data was not changed)
+		-> then we can get payload section of jwt and validate if the access is there for the user based on role/grant type etc
+
+Command to create private public key for jwt is different:
+keytool -genkey -alias tomcat -storetype jks -keyalg RSA -keysize 2048 -keystore mykeystore.jks
+
+- Authriztion code grant type in auth server:
+-   This grant type is used to redirect to login page created in auth server(like we used google auth server whihc we do not need to create)
+	user will get redirected by oauth2redirectfilter to customized /oauth/ page and the username and password will be registered to oauth server itseld(DB)
+	-> after success login user have to give scope options allow/deny
+	-> then it redirects to given redirect uri
+	-> once this is done clinet will cagain call the auth server to get access token by passing the auth token recieved in previouys step
+	-> also with access token user_info details is needed that can be auth server or any other resource server, we can cusotmize this
+	-> user gets login usiong oauthoauthenticationprovider and set in http session(security context -> authenticated - > user pricipal)
+
+- Steps to implement custom auth server for auth_code grant type
+a. Setup websecurityconfigurere adapter to add new users in aouth server, make /oauth/authorize page as authenticated and login pas as permit to all
+b. We need to create a controller api to provide user_info , This can be one of the resource server but here rwe are keeping herer onne,
+c. Also we need to enable resoruce server as therer shall be a filtering neede to check if auth_toekn was there once client try to fetch the user-info API to get this
+		-> generally this is keps in resoruce server but since api to provide user_info is there in auth server we need this filter as well
+d. We need to permit all /login page for client to put login , also we need to put authentication for oauth generation url
+
+Steps in respource server:
+a. Crate a link with url same like google aiuth link but the id (last part of url) shall be a unique new string -> lets keep it authClientId
+b. in application.proeprtiues we need to provide clinetId and clientSecret for above client_id, scopes, redirect_url
+c. Also for this we need to provide provider -> like url of oauth server, user_info api url etc
+	-> this is eneded but in google aouth server case it was a prod url but herer we have custom oauth server so need to provide this
+	
