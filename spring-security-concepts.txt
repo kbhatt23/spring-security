@@ -221,9 +221,17 @@ c. Also we need to enable resoruce server as therer shall be a filtering neede t
 		-> generally this is keps in resoruce server but since api to provide user_info is there in auth server we need this filter as well
 d. We need to permit all /login page for client to put login , also we need to put authentication for oauth generation url
 
-Steps in respource server:
+Steps in resource server:
 a. Crate a link with url same like google aiuth link but the id (last part of url) shall be a unique new string -> lets keep it authClientId
 b. in application.proeprtiues we need to provide clinetId and clientSecret for above client_id, scopes, redirect_url
 c. Also for this we need to provide provider -> like url of oauth server, user_info api url etc
 	-> this is eneded but in google aouth server case it was a prod url but herer we have custom oauth server so need to provide this
 	
+We can configure the auth server details in application.proeprties itself
+We need to configure the oauth check_toekn api in resource server- > on every request this will be called to validate if tocken is correct
+	-> We can setup JWT token store for this , if we are getting JWT token then we can skip this
+	steps : do not setup check_toek detials in application.proeprties , just allow the endpoint jwt_token in jwt_ auth server and use this endpoint to configure in application.proeprties
+this new endpoint will expose the public key, we uses private key to encode the JWT token's signature assymetrically hence can only be decrypted by public key
+	-> at startup of resource server we call this public key api and save it,
+	using thius we decode the signature and check if it has same value as payload body part of jwt(a.b.c) -> b is payload , a is header and c is signature
+	-> if both b and c matches we can use part b to check the role and token authentication

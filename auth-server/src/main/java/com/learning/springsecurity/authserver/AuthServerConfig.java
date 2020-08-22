@@ -31,7 +31,7 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter {
 
 				.withClient("keshavaclient")
 				.authorizedGrantTypes("password", "authorization_code", "client_credentials")
-				.secret(passwordEncoder.encode("secret")).scopes("user_info")
+				.secret(passwordEncoder.encode("secret")).scopes("user_info","read")
 				.redirectUris("https://localhost:8444/sitaram-app/login/oauth2/code/keshavaclient")
 				.autoApprove(false);
 	}

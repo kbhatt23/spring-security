@@ -27,8 +27,10 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter
 
 	@Override
     public void configure(AuthorizationServerSecurityConfigurer oauthServer) throws Exception {
-       
-		oauthServer.tokenKeyAccess("isAuthenticated()")
+       //token key acces is endpoint to see the public key
+		oauthServer.tokenKeyAccess("permitAll")
+		//checktoken acces is endpoint for resource server to call and validate each time a request comes to resource server
+		//better to use public key flow when using JWT for performance
         	 .checkTokenAccess("isAuthenticated()")              
             ;
         
@@ -42,7 +44,7 @@ public class AuthServerConfig extends AuthorizationServerConfigurerAdapter
 
 				.withClient("keshavaclient")
 				.authorizedGrantTypes("password", "authorization_code", "client_credentials")
-				.secret(encoder().encode("secret")).scopes("user_info").autoApprove(false);
+				.secret(encoder().encode("secret")).scopes("user_info","read").autoApprove(false);
 	}
 	
 	
