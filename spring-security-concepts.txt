@@ -2,6 +2,12 @@
 - A filter is called even before dispatcher servlet
 - different kind of filters are there for different secutiry concersn like -> login, logout, remmber me, authentication, authroization etc
 - These chain of filters are called by differnt proxies
+- Instead of configuring all filters we assing those to a single proxy and configure that proxy
+- > Request comes it goes to Delegating filter proxy which based on config passes to Filter chain proxy( a proxy that have the chain of filters),
+	This is needed as we cna have amany chains based on type of authentication/authorizato provider like google/facebook etc
+
+- A non logged in user will not have secutiry context, if logged in then only in session we set the security context
+
 - We only configure a single delegation filter proxy whihc calls objects of Filter chain proxy
 	-> this filter chain proxy is used to call different kind of filter chains(set of filters called one by one for authentication,auto=hrization, remmber me etc)
 	-> we need different chain of filters so that one is for google auth, other for facebook auth etc
@@ -12,11 +18,32 @@ Object heirachy in spring secutiry
 		security context
 		authentication object
 	principal		authorization (roles)
+
+Type of filters that gets called in sequence
+a. Secutiry context filter: USed to create or use existing secutrity context in http session
+b. Logout: as we do not need to chekc username/password
+c. Authenticationfilter : check if usernmae/pass is correct and create authentication object in secutiry context with user pricipla and authoriztion
+			-> in case credentials are wrong error is populated
+d. Remeber me filter: Create cookie for remmbering me just after proper authentication
+e. FilterSecurityInterceptorfilter: Actually chekc if end point is allower with current authentication user roles(authorization)
+
+Flow of authentication filter:
+ Authentication filter - > uses authentication manager -> whihc uses authentication provider for real work -> whihc needs daata of users/password from UserDetailsService
+- > we can have UserDetailsService of type ldap.jdbc,inmemory etc -> 
+
+
+Differnee between basic authentication and formbased authentication:
+a. in form based authentication we gets redirected to a html with a form content and user puts username and pass(csrf will be needed)
+b. Bu in case of basic authcnetation in case user is not logged in it gets a reponse header telling opening popup of credentials, a
+	also the way of transferring te crednetials are differnet in basic http it gets with authorization header and with form based it passes as form data(csrf needed to block it)
+
 So onece user logs in in httpsession we create object of securitycontext , in this we have authentication object whihc have authoirization object(details like user role)
 		and principal(user details)
 - Priciapl is basically an object that have user details for logged in user only
 - For a logged in user the springcontext object whill be present in http session , if in httpsesion security context object is null means user is anonymous
-		
+
+- If we add spring boot start security dependency , it automatically secures each /resource with default user as user and password as random generaed password
+- For custom username /password we cna set in application.properties
 
 - Using autoconfiguration spring boot adds basic login page and allow default user as username and random generated varchar as password , just by adding spring started security depenedency
 
@@ -48,6 +75,8 @@ It is an advacned form of basic authentication where username and password are s
 	once login popup is shown server provides a real of digest with some name in realm and a nonce string(the same string will be generated only once)
 	The combination of usernme , password and real are hashed using nonce string and then passed as authroization header with value Digest response....
 - This is more secure and specially when we are using http instead of https we can use it , however very few clinets uses it
+- Basic fundamental of digest is that the auth header is not base 64 encoded and it is hased using MD5 algo
+	-> even if anyone gets te hash value he can not get the actual password/credentials
 
 -> we can create multiple filters/interceptors and sequence is manged by @order
 minimum order gets called once and so on
@@ -180,11 +209,27 @@ c. password: Genearlly we also need authentication before authroization
 Access_Token : actual token that cna be used to call resource server
 auth_toekn: used in authrization code grant type to generate the accesstoekn based on need t
 
-Auth server exposes few endpoints and hence need web dependency
+Auth server exposes few endpoints and hence need web dependency -> it exposes endpoints and hence dependeinceis are starter web and oauth2-cloud
 - /oauth/token -> generate accesstokn/auth token based on provided grant type and if client id/clientsecret is accessible with that specific grant type
 - /oauth/authorize
 - /oauth/check_endpont  -=> if this is enebaled(by default it is bocked) we can pass token and see its details -> we need to configure in code to enable it
 in simple words in password type auth server handles both authentication(username and password store it contains) and authorization(clinent id and secret)
+
+end points exposed by oauth server:
+http://localhost:8081/auth/oauth/token
+http://localhost:8081/auth/oauth/check_token?token=6f995426-fa4d-42b4-a5e7-d87a6c226aa6 : get info related to toekn
+-> we must configure websecurotyuconfigurereadapter to keep these urls blocked andopen for only authenticated users
+	->  we need to pass client id and secrete as basic auth for this , just like while we pass those in fetching the access token
+
+
+API calls for auth server:
+a. client crendetials:
+	we need to setup authenticationWebSecurityConfigurereAdapter with in memory or D.B driven client id/ client secret, redirect url, resource scopes, garnt type -> cleitn_crendetials
+	-> we need to just pass client id and secret as basic auth header and put grantt_type in bpdy of post
+b. password: Along with step a , we need to set users by extending websecurityConfigurereadapter -> 
+	in request along with granttype as post body we need to also pass individual username and password , also header will reamin same as client crenetials
+c.autorization_code :same config as password, only thing will be we need to setup a login page
+
 
 Why To use JWT:
 - In normal cases the resource server have to call auth server to validate the token using check_token endpoint for its validtiy
@@ -201,6 +246,14 @@ How signature validation works
 -> similarly in JWT for aotuh 2 , we can keep private key in auth server , we can cretae JWT token -> with encrypted signature using private key(only public key can decrypt it)
 		-> once resource server get this jwt it can check if signature gets decrypted using pulbic key to a valid conent(data was not changed)
 		-> then we can get payload section of jwt and validate if the access is there for the user based on role/grant type etc
+
+JWT format:
+A.B.C 
+	A- > contains header content
+	B -> actual payload containing the access_toekn
+	C -> Signature -> nothing but encrypted with private key(present in auth server) of payload
+	signature can be decoded by resource server using public key shared by auth server -> compare this wiht payload , if content is changed then unauthrize in reseource server
+	-> if content is not changed then from payload chekc the scope of resource server, expiry date etc 
 
 Command to create private public key for jwt is different:
 keytool -genkey -alias tomcat -storetype jks -keyalg RSA -keysize 2048 -keystore mykeystore.jks
@@ -220,6 +273,7 @@ b. We need to create a controller api to provide user_info , This can be one of 
 c. Also we need to enable resoruce server as therer shall be a filtering neede to check if auth_toekn was there once client try to fetch the user-info API to get this
 		-> generally this is keps in resoruce server but since api to provide user_info is there in auth server we need this filter as well
 d. We need to permit all /login page for client to put login , also we need to put authentication for oauth generation url
+
 
 Steps in resource server:
 a. Crate a link with url same like google aiuth link but the id (last part of url) shall be a unique new string -> lets keep it authClientId

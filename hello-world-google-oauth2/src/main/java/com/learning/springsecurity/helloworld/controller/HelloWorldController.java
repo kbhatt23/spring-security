@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class HelloWorldController {
-	@Value("${keystorepassword}")
+	//@Value("${keystorepassword}")
 	private String encryptedVaultKey;
 	@GetMapping("/hello-world")
 	public String helloWorld(@RequestParam("name") String name ) {
