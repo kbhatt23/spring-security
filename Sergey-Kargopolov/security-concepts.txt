@@ -1,0 +1,175 @@
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+RBAC vs SBAC
+RBAC means role based access control: used in authorization but it is used within the same application/company
+SBAC means scope based access control: used in authorization same as RBAC
+ but mostly used when resource server is outside the organization
+ 
+- Oauth 2.0 means open authorization 
+version 2.0 was released in 2013 due to open issues with Oauth 1.0
+
+- Oauth 2.0 is an open source authorization framework
+  it provides different authorization techniques based on the application
+  different for mobile app/web app etc based on the scenario
+  and hence it is a complete framework and not just protocol
+  within the same framework we have multiple ways/protocols/techniques
+
+- Spring created spring oauth project 5-6 years ago that is free and open source
+ it is very popular and 100s of project run on it and is a must known skill for any java dev
+however due to extreme popularity spring wanted to extend it and hence in spring 5 new version of oauth support was planned
+overall dev is still in progress
+it provides support to client , auth server and resource servers all in one project
+ new spring version is perfect to be used in client and resource side but new auth server is still in progress
+ : new auth server do not provide all oauth grant types
+so for that we can use another open source free auth server keycloak that support all kind of oauth grant types
+ 
+- There are different client types
+ a. mobile app / native app, react native app
+ b. web app in browser as client
+ c. back end web application server
+a and b are public in nature ans it can be intercepted over network but c option is more secure
+hence in option c we use client id and client secret for authentication using auth server
+but in case of public faccing clients we can not do that (secret and pass will be publicly visible)
+
+hence oauth framework have provided different flows/types based on the client category  
+
+- An authorization server with OIDC support provide id token 
+  id token = access_token + extra user info like email,name etc
+  
+- As mentioned above based on the client type there could be different way to access token
+as each of these client types have different level of security and different use cases
+for this oauth grant types are used
+
+Grant types
+a. Authorization code:
+ same as redirect
+ should be used by clients that can securely store client id and secrets like back end servers
+ js and android based apps can not store the secrets securely as they are public 
+  hence for these PKCE authorization code is suggested : enhanced authorization code grant type 
+  
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+- Once access token is expired we get 401 unauthorized
+  we can call the token endpoint of authorization server to get the token refreshed
+  we will get a new access token(if needed update the old access token) on refresh and that can be used
+  we can even request for token that never expires: infinite expiry
+  refresh_expires_in will be 0 and the scope will have offline_access
+  remember allowing access token with infinite expiry can be dangerous and should be handled with extreme care
+  
+  grant_type will be refresh_token
+  
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+keycloak is an authorization server
+used for identity and access management and supports oauth 2.0 flows and openid connect
+
+examples of authorization servers
+keycloak, spring auth server, AWS cognito, okta, social media based authorization servers
+
+definition of keycloak
+- keycloak is an identity and access management software can act as authorization server
+  supports oauth flows and open id connect
+  opensource application and hence free to use
+  keycloak provides both REST aPis and admin ui to let user and RBAC gets created
+  keycloak supports Single sign on(login and logut at multiple sites)
+   once logged in /logged out at one site reflects on a group of sites
+  keycloak supports social media login as well, get user logged in using facebook/google etc
+  keycloak supports user federation
+   -> meaning it can pull user data from any active directory like ldap/mysql d.b
+
+- A realm is a space that groups users ad their settings
+  each user in a realm is isolated from another realm's user
+  by default one realm is created named master and must be used for admin user only
+  never create client users ever in master realm
+
+
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+Remember that a scope of token can be used to call specific endpoint exposed by auth server and resource server both
+- in summary we can create custom as well as oob scopes
+ and using token based on such scoped we can even call endpoint of resource server and auth server 
+ eg: while generating the auth token if scope passed was profile
+ we can use the token as Bearer for endpoint /userinfo of auth server of keycloak
+ 
+- There is a logical difference b/w role and authority
+ authority is nothing but priviledge to allow access to specific task
+ but group of these priviledge combines into role
+hence we on the application level deals with roles and less on authorities/priviledges
+
+but when it comes to spring boot there is no difference b/w roles and authority
+ as both of them are merged into single collections
+we can use hasRole("ADMIN") but for authority : hasAuthority("Role_ADMIN") 
+
+- Method level security like @secured/ @hasRole works for any method
+ best place might be controller but can be used in service layer as well
+ 
+ @Secured < @PreAuthorize
+ in PreAuthorize annotation we can use spring expression language for complex queries
+ eg EPreAuthorize("hasRole('ADMIN') or #id == principal.id")
+ public void delete(int id){}
+ 
+ meaning this method can be used for any admin or in case non admin user is deleting its own profile
+ non admin and self non profile ones are ignored
+ PreAuthorize vs PostAuthorize
+ :-> both can be used for method level security
+ however in PostAuthorize expression is evaluated after method call
+ in PreAuthorize expression is evaludated before method call using AOP or dynamic proxies
+ in PostAuthorize we can use return object for evaluation of expression
+ 
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+- To start a spring boot app at random port we can keep server.port=0,
+  it ensures that it starts only at an available port 
+  
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+- We can implement social login using spring oauth2 client dependency easily
+ since most of the public api url like auth url, tokem url, userinfo url is same for all
+ we need to configure only client id and client secret rest mostly are same
+ also we have a predefined config key for github.facebook and google etc that we can use and pass client id and secret
+  
+- Okta is also a identity and access manager product just like keycload that can be oauth 2 based auth server
+  however it is cloud based service unlike keycloak that is standalone
+
+- If using spring boot logout feature for external auth providers like okta,google etc
+ after logout spring sessions are removed but that do not happen for external auth providers
+ so after lgout if user tries to login it wont ask for google/okta credentials
+we need to add extra code to ensure that after spring logout it also logs out the external resource cookie as well
+so that it asks for google/okta credentials again 
+This is provided as part of openif contract oob named openid end session endpoint and most of the auth provider implement this contract
+- Most of the auth providers like okta,google etc provides end session endpoint url as part of open id contract
+
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+- By default keycloak stores user data in h2 d.b which is not production standard
+we can use custo d.b and configure keycloak to store user data : eg mysql
+
+- Keycloak provides SPI to integrate external D.B with keycloak to store and edit user details
+ like useremail, username , password etc
+- For any kind of customization in keycloak server we can implement SPI
+  for this we can create java project that implements SPI interfaces package to jar
+  and provide this jar while running up the keycloak server
+  eg: in some scenarios(practical) current user is already stored in d.b with spring app
+  we can implement SPI to call this api for getting user data and validate password
+  using SPI we can do and package the jar and run the keycloak for this customization  
+  
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+  
