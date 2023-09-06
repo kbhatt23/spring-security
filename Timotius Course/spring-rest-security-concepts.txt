@@ -1,0 +1,209 @@
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+- This Course is about learning REST API security threats and how to prevent them
+- Whether we develop REST API internally or publicly security is very important aspect
+- So it is very important to learn basics of security threats and how to prevent them
+
+- Writing good security followed code is not giving 100% gurantee on secuiring from all threats and risks
+
+- Spring Boot provides spring security project to handle some of risks or threats
+  but we will not use them in this course and write handson code to learn it better
+  
+- Every digital Device we use have security risk like website, application, similarly REST API have also security risk
+  REST API exposes entry point for other softwares to interact with our software , system, network,data
+  hacker can hijack and misue the data, network , close the system etc
+  We must do penetration testing to evaluate security level
+  
+a. SQL Injection Threat
+- SQL Injection threat can occur when we are dynamically creating SQL based on API input
+  Application might not know safe and unsafe inputs and since it is created dynamically based on user input
+  unsafe sql will still get executed and cause issue
+  eg: an API takes SQL from client and run it
+  very dangerous as instead of selec query client can send delete query
+  Note: Remember using framework does not mean application is safe from SQL Injection Threat
+  In summary never use SQL string to be fetched directly from api input
+  Also it is very dangerous to create sql using string append as user can send dangerous input
+  eg: findByEmail(String email){
+		var sql = "select * from user where email="+email;
+		
+  }
+  what is user sends delete query also
+  eg: email = kanishk@gmail.com; drop table customer;
+  since we did not validate this before it will also get executed
+  
+  Calling a stored procedure to update a field in customer can also be risky
+  even frameworks like spring data jpa can not help save this
+  
+- It is a common myth that post body is secure
+  for https body param are encyrpted and are safe to be read
+  however that does not mean it is safe from sql injection
+  if we are building an sql query dynamically from request body param hacker can send dangerous query
+  once in back end it is appended with sql append string it will get executed and can be very dangerous
+  like it can check for mysql/postgres sql version, view all the tables and their schemas
+  even drop the table : woof
+  even though the endpoint is https request body can still be seen by the browser client
+  if hacker runs an app, and in netwrok tab see any sql query passed from browser F.E to API
+  he can understand that there is chance of weakness in terms of sql injection  
+  
+- If we use jdbcTemplate with dynamic sql string creation with input from request api either in
+  path param, request param, headers or request body is very dangerous
+  these things will be safe using spring data jpa, as there is no dynamic sql creation
+  however if we use sql procedures
+  or use @Query to create SQL string using input from F.E it is not safe
+
+  it will be safe to use jpa crud repository method and sql injection params will be ignored
+but if we are using @Query to call custom SQL that is dynamic can be dangerous  
+
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+- Safe way to avoid SQL Injection is using prepared statements instead od using string sql with dynamic append
+  a prepared stament is staement with placeholders like ? and that gets populated with user input
+  It means the sql statement can not be modified only the placeholders are modified
+  In case of sql append string complete sql can be modified as a string
+  but prepared staement is safe as sql statement is never modified only placeholder values are modified
+  hence if user input contains sql statement that wont be executed as statement 
+   but instead will act as value of that column/placeholder
+
+- Another approach can be to filter the request during validation using filters or interceptors
+  if query param/ headers/ request body contains dangerous sql commands like delete, drop we should send bad request status code in validation itself
+  Also avoid using stored procedures as that can not be safe from sql injection
+  Apart from code we should give specific role based authority to different user
+   -> like never share super/admin user to everyone including the application driver and jdbc connection  
+   create specific user in db with specific restricted role and use that as user in jdbc driver in application and users
+    dangerous commands like drop table, drop column, delete should be not given even to jdbc client user in application
+	should not be able to create another user also (admin access)
+	
+- In case of Prepared staement we have ? set for placeholders
+  but order of these matters and also in case if there are so many placeholders it can make mistake
+ due to so many placeholders dev might not set data values in order
+ so we can use NamedParameterJdbcTemplate in which we can assign placeholder with a name
+  and in source data map we can keep key value in any order and
+  it works so long as key name in data map is same as that in placeholder name in prepared statement 
+  Note: Remember even prepared statement can not save us from stored procedures based sql injection
+    
+- Remember that during exception spring by default show the full stack trace
+  during sql injection error it can contain internal deails like sql query table ,clolumns , sql version etc
+  hacker can get these sensitive data base related details and misuse
+  so we should always never show inner details and create custom generic exception handler
+  and show generic error message with hidden internal implementation like d.b , framework , programming language, drive etc
+
+- Apart from creating request validation filterting like sql injection interceptors
+  we can also do validations on request payload , this can also save us from sql injection issues  
+  
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+- Since framework like spring data jpa repository uses prepared statement the method sql creation approach works fine
+  however sql injection threat is possible for jpql query built from string and dynamic fields from client
+  eg: we create sql using string append following jpql or sql and then using entitymanager to call query
+   same danger like using jdbc template
+- Remember that dangerous sql injection does not always mean deleting data
+  but be able to view restricted data is also dangerous as data theft   
+  
+- Best way to implement security is to do in multiple layers
+  if one layer got penetrated another layer can save it
+  limit the damage in worst case
+
+- Different penetration layers to be safe from sql injection
+code level
+a. prepared statements
+b. bad data filtering and validation
+c. never use triggers/db procedures
+d. limited access to the app for db access
+extra ones: outside code level
+e. rotate the password
+f. audit trail
+g. use WAF
+
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+- XSS aka cross site scripting is a web application security threat where malicious code is run on web application
+  bad site/hacker inject malicious code like java script and run on web applicationin the browser
+  this malicious script code might be running in browser without user knowing it in the background
+  one common example:
+  a. the java sript code runs on browser (malicious) query the cookie and get authorization token
+  and actually hit the real application by using this token and overhit the server and try to make it overload and eventually down
+  b. keylogger: Every time user click/type in browser that charachter is sent to hacker 
+    and it can track things like username/password / credit card, pin etc and other sensitive data
+  c. send screenshot of browser like netbanking page, sensitive site data to attacker
+
+- Types
+a. Reflective XSS : malicious script is executed on user's browser but not saved
+b. Persistent XSS: malicious script is executed on user's browser but saved in the application 
+  and can be executed n times
+   eg: hacker injecting script and taking credntials from cookie and storing in its d.b for persistence
+
+- In XSS threat hacker inject malicious script in user's web browser and get it executed without user knowing in background
+ How hacker in injecting these malicious scripts
+a. via emails, if user open email and click link it can inject the malicious script in the browser
+b. opening malicious websites
+  remember these website links/email links can be shortened using url shortner making it less suspicious
+  the a href link can contain malicious script code
+
+- Even a file upload F.E functionality is a xss threat
+  if we upload csv in form of html and javascript code seperated by comma this can be dangerous  
+
+- eg: We create one api that takes name as queryparam/path variable and returns ting message and append name
+  using postman if we send bad string like <script> that is malicious it will be harmless
+  but in case we have html css running in browser and send malicious script in name
+  that script will get executed by browser and it can be in background reading cookie and sending sensitive data
+  this is very dangerous while running a web app in browser
+  eg: ?name=Good Morning Anna <img src='x' onerror='alert("This is XSS")'>
+  remember if this is executed in brower js can be executed and here malicious code can be kept by hacker
+  eg2: malicious site creates api to download a file and in the file it puts malicious java script
+  this wont cause issue in postman but will have issue in browser
+- The above 2 code examples are demo on how hacker can inject malicious java script code in user's browser
+
+- Even React has holes n XSS
+
+- XSS Thread prevention  
+  XSS can occur in 2 ways
+  input: if we are recieving xss vulnerable script
+  to solve this we need to have validation, intercept filter for bad data
+  also if needed in api accept only json/specific format as payload
+  -> this means in request header content-type has to be passed and on server if accepts : content-type did not match unsupported operation exception is thrown with status code 415
+  
+  output: if we are sending xss vulnerable code back to brower
+  solution: a. Always encode the output , never just return string but use some protocol to encode the object
+   We cann use library provided by owasp encoder to encode dangerous string to client
+   so that browser wont run it as plain script in case it has script
+   
+  b. produce always json or specific format and not just any raw data : meaning response header content-type should be filled
+   -> This way browser wont parse the response as html or plain text
+   it will parse it like json and hence script wont be executed in the browser
+   Spring boot automatically return text/plain for string returns and application/json for any object
+   even for file it will set response header content-type as application/json by default
+   unless put in produes annotation parameter
+   Now tough thing is to set content-type in case of file return
+   as file can be audio/image/jpeg and other variation
+   how to determin the type of file: do not implement use apache tika library
+   The logic to find the produces/content-type of response is very important
+   in demo we created a file that contains html and js script, if we return it just like this, the content-type will be application/json
+   also browser will run it as script
+   so if we set correct content-type : for html set as plain/text and for others use tika library then browser will be safe from this
+   it will consider it as plain text and wont run the browser script from file
+   
+  c. in response header add xss headers to ensure safety by browser like chrome,firefox etc for xss preventions
+   X-XSS-protection: 0
+   X-Conten-Type-Options: nosniff : so that browser do not predict response data type 
+       instead forcefully use response header content-type to parse the body
+	   this way we an ensure that body is paresed to json/xml and hence wont be executed on browser as script
+  
+   Content-Security-Policy
+  This header forces what all scripts can be run and where : this can make our system more secure in browser
+   as whata all script can be executed by browser as mentioned here
+   eg: download image from specific prefix url, run specific js, allow iframe or not etc
+  fine tune according to our needs
+  in demo we are setting Content-Security-Policy enabled for a script id
+  so that script only will be allowed to be called by browser others will get rejected
+  we have used filter but that is not perfect place to do and also require fine tuning
+  
+  
+  
+  
