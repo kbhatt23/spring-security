@@ -204,6 +204,282 @@ b. opening malicious websites
   so that script only will be allowed to be called by browser others will get rejected
   we have used filter but that is not perfect place to do and also require fine tuning
   
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+- In our course we have written all the security code in the API
+  which in case of enterprise level be tough as API have huge code for business logic
+  writing code related to huge business logic + security in same project make it less maintainable
+  hence there are certain API management tools to help reduce development time for these security parts
+  features
+  a. Rate limiting to avoid denial of service attack
+  b. token management : authentication + authorization
+  these are cross cutting concern and will be needed for all the APIs
+  hence it is good to have at one place and maintain at single place
+  this way we can focus on writing complex business logic in APIs and let API gateway do the security and cross cutting concern
+  benefit: no need of copy paste in all service 
+           single place maintanibaility
+           do once and use forever
+           easy to read and maintainable code for business logic APIs
+
+- API management tools provide security features by default + plugins
+  plugins can plug in or out specific security or other features
+  but that does not mean we need not to write security code at all
+  tools like APIGEE and kong provide extension in its features using different programming language(java in kong and LUA in APIGEE)
+  so in summary we can use oob features, pluggable features and even add our own features in api gateway tools
+
+- Any external call comes via firewall
+  Firewall is of 2 types: 
+  a. netwrok firewall: security on netwrok layer like same vpc outside vpc etc
+  b. WAF: web application firewall : provides security on http layer for http applications
+  
+Flow
+  
+ external client ->        network firewall ->           WAF ->                     API gateway                    ->               APIs                                
+  
+  external system VPC    provide netwrok 
+                        vpc level security              web based and http     more security like authentication
+						like xternal or internal         security              token, rate limiting etc   
+						vpc based on security group                             load balacing among api instances
   
   
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+- Denial of service attack was meant to deny legitimate users from accessing APIs
+  attacker hits the API huge amount of times to overload/overburden the API servers 
+  hence it causes downtime and slowness for actual legitimate users
+  Attacker can use single IP machine but that can be more easily traceable and block
+  Sometimes attacker uses multiple IPs to overhit and overburden server that is very tough to inspect and block:
+  -> Distributed Denial of Service aka DDOS attack
+- Unlike SQL injection and XSS DOS do not make use of weakness in code
+- Even to execute very simple basic code it require some bit of resource
+  To Server a request API code might need below resources
+  CPU utilization, RAM , har disk space, Socket/Network I/O for external APIs,D.Bs etc, Server Threads
+  In DOS attack so many requests are called concurrently that all these resources are eaten up
+  which causes legitimate users to either have slowness or complete timeout causing complete deny of service
+  also DOS can cause complete shutdown of servers causing complete downtime  
+  
+- Another approach of DOS is by sending request within rate limit
+  but in each request it has so many request body and so much task to process it eats all resource of server apis
+  eg in bulk create it request for 1000s of items to be created and request is send within TPS rate limit
+  or response payload is huge  
+  
+- Approaches to solve DOS attacks
+a. IP witelisting/restriction
+   In firewall always allow only specific client ips to pass through the firewall can be able to call API
+  this way we can exsure that bad attacker machines are not hitting our API server and eating resources
+  we can use whitelisting approach when all are blacklisted except configure api and firewall reject such requests
+  in case of cloud based client we can whitelist the CIDR range
+  -> For APIs that are public we can go with blacklist approach
+   all client IPs are whitelisted except the ones added in blacklist IPs where we keep known attacker IPs
+   this is reaction as IP was bad in the past in project or other project
+b. Rate Limit
+   Reject the requests that are comming at an incomming rate > the rate of reques we can handle
+   so that resource is not overburdened
+   legitimate clients can retry after some time as error code 429 will be sent in response header
+c. Use Pagination:
+   in case of bulk response we can use this to ensure huge data is not passed
+
+- In the Deployment architechtural diagram presented
+   client -> network firewall -> WAF -> API Gateway -> Load Balancers -> APIs
+
+  If multiple modules in above are providing rate limit and ip whitelisting we should do as early as possible to the client
+  so that less resources in each module is overburdened
+  eg: if we do rate limit in REST api and eventually reject request then already other module (WAF, API gateway, Load Balacners)
+  are already exhaushted so best approach in DOS prevention is to prevent as early as possible  in the request layer ' s module
+  Note: Just like other security preventions even rate limiting should be kept at multiple layers of penetration
+  It is possible that in WAF we might misconfigure or there is some technical bug so other layer can protect from it
+  This concept is known as defense in depth and is common in most of security principles
+  i.e provide security in multiple layers, also we should not do the same in all layers
+  as running the same seurity code in all layer will add latency and hence cause slowness in APIs  
+  
+  
+- Encoding the data is converting data in format
+  nothing to do with security this is just so that other systems can understand the data
+  eg image is encoded in binary format so that it can be sent but it has no security concern
+  Types of encoding: Base64 encoding, URL encoding etc
+ 
+- In case of URL encoding always encode the query parameters but the whole url need not to be encoded
+  just query parameter string encoding is good
+
+- Encryption is a security concern
+  goal is that only valid users can read the data and no one else
+  eg: AES , DDDES
+
+- Hash is a security concern
+  used for data integrity in form of checksum/signature
+  if some part of data is changed we can know that it is changed, but what part of data is changed we can not know
+  unclike encryption in hash we can not get back the original data
+  we can only identify if data is changed or not as it is checksum/signature based, original data can not be retrieved  
+  Result of hash function is a string that has following features
+a. if 2 identical data is hashed using same hash function then hash string will be identical
+b. if data is different even by a single char the hash will be different
+  eg: Bcrypt, SHA256 Argon2
+  
+Salt: Before hashing extra random charachters are added
+  so original data + random charachters(salt) are appended and then hashed for extra security
+  we need to validate 3 things in order to have data integrity (data not changed)
+  salt, data, first hash
+  Steps: we rehash the string and salt appended string
+    if this rehash == hash one then data is not changed
+	
+  eg: kanishk and krishna uses same password
+  but random charachters salt is added that will be different for them
+  then this combination is hashed, hence hash of these 2 will be different
+  we should always hash the password with salt and not encryption (salt should be unique for each user)
+  it is because in encryption if private key is accessed by dev/qa they can decrypt to get original data
+  in case of hash we can not get the original data onnly can check if 2 string have same hash and data is not changed  
+  
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+- Base64 Encoding is useful in file transfer: convert base64 encoded string and pass over network
+  but it has disadvantages
+  a. It has more size (around 20-30%) than normal file : like Base64 encode file size > actual file size
+  b. Additional processor work to be done by sender and reciever
+  c. no security
+  Better approach in file transfer among 2 applications
+  -> Either get a URL like S3 and download the file
+  -> MultiPart File
+  
+- Benefit/Reason of doing Base64 Encoding in URL is to escape the query parameter
+  eg: some special charachters are there in queryparam/path then it can be easily passed via Base64 URL Encoding
+  eg: abc.com?options=create/update
+   this will create a path after '/' and hence better to base64 encode the parameters
+  If this is not done then the reciever server might understand it wrongly so to be safe
+  we encode using specific convention and decoding of URL get you exactly what was passed  
+  
+- Benefit/Reason to use Encryption is to ensure data is saved and only valid user can decrypt and use it
+  Encryption can also be done on data base level : encryption at rest
+  If data base is leaked the data will be still encrypted and hacker wont be easily be able to get the data for misuse
+  
+- Benefit/Reason of using hash in APIs
+  we can validate if request body was not intercepted and changed
+  somewhat similar to what JWT does: data integrity
+  
+- HMAC : Hash based message authentication code
+  Ensures that the data is not modified by network interceptors
+  In HMAC client has to send extra data related to data validation
+  API provider identifies a rule and share that with the client
+  also shares the secret key with the client(unique secret key for each client)
+  
+- Steps
+  a. Client uses HMAC method and provide input as secret and message(based on format)
+  b. It calls Server to get HMAC token : if all is validated server provides HMAC token
+  c. in header client can set this hmac token
+  d. server validates that request body is not changed
+     Server already knows the secret key and rule and create HMAC code and compare this with the header one
+    if correct then data is not changed + client is authenticated
+  We can use nonce salt: meaning random unique string everytime
+
+- In real life Client need to set X-Register-date header in request
+
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+- So Far we have exposed APIs to public and everyone
+  but on production standard we would expose the APIs to legitimate users 
+  we must know who all are using our APIs, good for security to limit APIs to legitimate users
+  Benefits
+  a. Securing APIs to legitimate users : limiting
+  b. view who all are using our apis
+  c. who is abusing or overusing our apis
+  d. monitoring what all clients are using our API and to waht level
+  e. different late limit for different user: for premium better rate limit and less for free user
+  -> provide username/password to authenticate and tell who the client is
+  
+- Bad Authentication approaches(Don't do these)
+  a. Passing username/password as query param or path variable:
+        bad the browser can cache it and other can see the username/password in browser history
+  b. Thinks that Authorization header is secured and save the base64 encoded password without using hash and salt
+  c. We must choose authentication to be done on APIs that are needed
+     eg: for health check we need not this but for other data related apis we must add authentication
+	 it is easy to implement based on url pattern
+
+- In case of Bcrypt hash the salt is contained in the hash itself
+  but for other algo in shing we have salt nd hash seperated
+  so we need different column in basic authentication table for salt and hash
+  for bcrypt we can keep salt as empty as that will be kept in hash column itself
+  for other algo we can make use of both columns as hash wont contain salt in itself
+
+- HTTP provide response header WWW_AUTHENTICATE where we can tell client what kind of authentication it needs
+  during failure in fiter we can set it but its bad idea as it can have security issues
+  sometimes telling less to client is safe and secure
+  
+- Data Transmission threat
+  You go to cofee shop see a free wifi with name star bucks high sppeed free
+  this looks intresting but might not be actually owned by starbucks: it might be actually a bait
+  maybe some attacker have used a wifi portable device to show this
+  if we connect to this wifi and go to http website(unsecured) all data will go in plain text
+  if sensitive data like username/password/credit card is sent it will be in plain text
+  hacker can intercept it and see the details using some packet sniffing tools
+  this is called packet sniffing  
+  
+  -> IF api was https based then hacker can intercept the data but can not decrypt and understand it
+
+- How to setup HTTPS on server
+  install TLS/SSL certificate on server side shared by Certificate authority
+  CA or certificate authority is trust store for all valid SSL/TLS certificates
+  Browser calls CA to get the public key present which was shared during certificate sharing by Server to CA
+  so actually only public Certificates are trusted by browser
+  but for development purpose we can use self signed certificates
+  
+- In production it is not good practise to install ssl in each microservice deployed across multiple servers/machines
+  better to install in Load balaner/API gateway level and it can show https layer for outside traffice
+  and internally Load balaner/API gateway calls API using http via internal netwrok within private VPCs 
+  
+- Best practises for HTTPS:
+a. Always expose APIs over HTTPS
+b. For Web application like react/angular if http is called forcefully redirect to https
+   eg: http://www.google.com forcefully goes to https://www.google.com
+c. In response always set header HTTP strict transport 
+   this forces browser to call further request forcefully in https
+  
+- Logging is not just important for tracing and debugging purpose but also for security
+  if we add audit log and analyze it can help in security also
+  Audit log means logging what all operation are getting executed and by which client and how
+  Audit means what all operations are getting called by client with this 
+   we can see in logs if any potential security threat is getting executed  
+   if any dangerous commands are getting executed by clients
+   
+- Audit logs should be stored in durable location like database or file storage
+  Why : So that in case due to DOS or other hacking our system machine or process goes down
+  we still have the audit log to find the cause of beeing down , maybe security thread cause our servers to go down
+  Where to keeps logs:
+  a. Simple log text file: Shared across EBS in AWS for persistence
+  b. ELK stack
+  c. database
+- Audit log shall be visible to only trusted resources as it shows huge inner operations and implementations
+    if it gets leaked system will get hacked easily 
+  There is a chance of theft is one person have all access
+  hence audit logs shall be shown to limited people and that should not be highly technical to save from fraud
+
+- What to log depends on organization and API
+  suggestion:
+  API response time including server wait time in ms
+  HTTP Verb
+  URI Path
+  optional query string
+  client who used this: username/token etc : not password
+  request body: except sensitive data like credit card/password
+  
+- Not using audit log is a threat
+  as if no audit log present we will never be able to see that we faced any security threats
+  as we will not be able to monitor operations/actions performed by clients
+  
+- We can implement audit logging using spring boot oob filter for each request
+  CommonsRequestLoggingFilter will generate logs but only in specific format
+  we still need to parse it get all the data and store in data store like elastic
+  to make this parsing easy we can use loggly tool instead 
+  or also we can use logstash to parse this and push correct formatted data in elastic
+  for simplicity in code demo we are using loggly to parse this data and push to simple log file and not elastic
+    
+
   
