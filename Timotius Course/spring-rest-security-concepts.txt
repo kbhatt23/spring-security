@@ -481,5 +481,301 @@ c. In response always set header HTTP strict transport
   or also we can use logstash to parse this and push correct formatted data in elastic
   for simplicity in code demo we are using loggly to parse this data and push to simple log file and not elastic
     
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
 
+- So Far we have learned how to do basic authentication of user and using audit log we know who is accessing what
+  but so far one authenticated user can access any of our apis
+  this is not good approach
+  as some api endpoints might be admin(only admin must access),
+  some might be write/read(read user , write user) ,
+  some will be info  (any user can access it)
+  a hacker can create random users and if admin apis are open for all, hacker can do data theft/data loss
+
+- Access Control List:
+  Same as principle of least authority: give exact priviledge to the users not more nore less
+  giving more access can be dangerous and security concern, giving less will hinder the user's work
+  Similarly on API endpoints if we apply this practise it is known as ACL
+  List of users based on access
+  meaning a map that has key as role and value as list<user>
+ meaning in ACL we have list of users with their access mapping  
+
+- Authentication is the process of identifying who you are
+  Authorization is the process to identify if you have access/permission to do the task or not
+  good practise = authentication + authorization
+
+- Which HTTP response status code to use during failure
+  a. 401: Authentication failure
+     username/password is incorrect, no auth in request header
+  b. Authorization failure
+     authentication success but ACL failed
+	 auth request header present but is expired or do not have that priviledge
+	 
+- Up untill now we have learned basic authentication, that work fine bt a drawbacks
+ a. username/password is still encoded to base64 format that anyone can decode
+    hacker can easily intercept and decode it
+ b. password validation happens using hash which is slow and can be made faster
+    hash is designed to be processed slowly so taht hacker can not break it
+    now hashing is not very slow like taking > 30-40 seconds but it is still slower than like comparing 2 strings
+	and for modern applications users count and api request count will be huge
+	and if for these scalable systems we are using hash validation for basic auth for each request
+	hashing step will eat a lot of cpu operations and hence cost of machines in cloud/on premise will increase
+	this is done only for security and business logic will still need more powerful machines and hence more cost
+ c. Not recommended to use basic authentication for web site login functionality
+    as username and password can be intercepted as plain text part of Authorization request header
+    Extremely bad practise to use basic auth for ui based login
+    for application to application basic auth is still fine but for web application login it is a blunder
+
+- For web application login we can use token based authentication
+  Steps in token based authentication
+  a. User uses web front end to call /login endpoint provided by back end
+  b. B.E authenticats username/password and provide token
+  c. F.E can pass on token to B.E APIs and B.E can validation this token
+    remeber the token will be time limitted
+
+- We will store the token in session cookie
+  session cookie is not persistent in browser instead remain in browser session
+  once user closes the browser the data in this cookie will be lost, we can set max age for these cookies
+	
+- SessionCookie token works but it has security vulnearbility
+  -> session fixation attack
+  Attacker calls the login api provides basic auth credentials and get session cookie token
+  then attacker shares a link to victim by appending the session cookie id
+  victim logs into the system but since the method request.getSession(true) uses existing session
+  uses cookie shared by hacker
+  now hacker can call any api as it has the same session cookie as that of the victim
+  -> CSRF : cross site request forgery
+    Victim logs into the system and session cookie gets created
+    Victim click the link shared by hacker and hacker have code that takes the session cookie in browser
+    and run scipt coe on browser to hit server with bad data like bad comment etc
+
+- Threat prevention for session fixation attack and CSRF
+  a. use random session id after user succesfully logs in
+  b. have limited time set for session cookie
+    this way hacker will have smaller window to attack and trouble
+  c. Set cookie security attributes on session cookies
+    -> httponly: if set to httponly a cookie data can not be read by javascript code in browser
+               -> this saves us from csrf attack to some extent
+    -> secure: can only be called via https only
+  d. set samesite cookies : only when ui and back end are running in same server domain	
   
+- code solutions for session fixation threat
+  use request.getSession(false)
+  if not null invalidate this and then create new session
+  now hacker's session and victim's session will be different even thout victim's url contains cookie id
+
+- code solutions for csrf
+  provide the session id to client during login after hashing it
+  in request header client must pass this token
+  server validates the cookie as well as this token using secure util methods of string comparing  
+  
+- Even simple operations like String comparison can be security threat
+  java String equals comparison works like it returns false on first unmatching charachter
+  so hacker can use the reponse time to predict the charachter
+  and some how predict the hash
+  even though other things can make it very tough as response time of api depend on a lot of things
+    like random G.C, server latency, netwrok latencym load balancer latency
+	 everything mentioned above is random so predicting with time latency is not easy
+  but if we want to be super safe we can use secure methods to compare strings
+  ----- hence to compare strings specially csrf headers or othher client request strings with server strings
+  we must use MessageDigest.equals that do not let hacker predict hash based on time it took to calculate string comparison  
+  
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+- While deploying web applications and REST api we can have different domains and subdomains
+  eg: F.E running in domain fe.example.com and B.E running on be.example.com
+  By Default the access from different domains/subdomains will blocked as part of Same origin policy(SOP)
+  eg: in our session cookie html it will work as localhost
+  but if using 127.0.0.1:7001/sessioncookie.html the ajax call will not work
+  as server is running on localhost domain and html is running on 127.0.0.1 domain
+  
+- Same origin policy is a web security mechanism to ensure script from one domain do not work on another domain
+  Restricts script from one domain to another domain or origin
+  What is an origin
+  -> origin consist of 3 things : protocol://domain:port/
+     does not contain the url of exact path of resources
+     eg: http://localhost:7001 is one domain http://127.0.0.1:7001 is another domain
+  so if we write any java script code to call API running on another origin(combination of protocol+domain+port)
+   Same origin policy will not allow this
+  eg:
+  we are opening browser with http://127.0.0.1:7001/htmlname.html
+  and in javascript code calling http://localhost:7001/api then it wont work
+  but if it is    http://localhost::7001/htmlname.html it works
+  also html is:  http://127.0.0.1:7001/htmlname.html
+   and api url in javascript code is  http://127.0.0.1:7001/api then it works
+   
+ also if F.E origin is https and B.E protocol is http CORS will block it as part of same origin policy
+ so by default same origin policy F.E protocol , domain and port should be same as that of B.EBS
+ if anything is changed apart from url path it wont work by default unless we allow
+  even if protocol changes or domain changes or even port changes it wont work by default 
+  
+- In CORS browser first send a small request with same signature to API back end
+  if it fails it wont call the actual API otherwise calls the main AP with actual response
+  this is called preflight request
+  CORS is deeply explained in mozilla website
+  Few important response headers for preflight and actual API calls related to CORS
+  a. Access-Control-Allow-Origin : * or ip
+  b. Access-Control-Allow-Methods : * or GET etc
+  c. Access-Control-Allow-Headers: CORS can block even using headers value : * or custom or oob http headers
+  d. Access-Control-Allow-Credentials: Allow Browser to send credentials to Back end API : 
+      credentials meaning passwords, TLS certificates, cookies, session cookies
+  e. Access-Control-Allow-Max-Age: seconds to cache CORS response
+
+- Spring provides oob annotation @CrosOrigin to handle any cors features
+  using annotation field we can pass all the http response headers related to cors
+  annotation process automatically update the response headers
+  We can use @CrosOrigin annotation at class level as well as method level
+  hence we can put this to specific controller(all methods in controller are impacted)
+  or method (specific controller method is impacted)
+  or common configuration for all: global configuration for all APIs
+  
+- To examine the response headers related to CORS
+  we can use preflight apis: apis that have same url and body and headers except method is Options
+  Spring already handles this case of options method by default
+  if client calls api with same things except method as options it consider it as preflight
+  and client can see the response headers related to cors  
+
+- To define global CORS we can create filter with order as highest precendence so that it gets called first always
+  If we create globalcorsfilter the session cookie info api will stop working
+  it is because the jsessionid cookie wont be present in browser as CORS disable it by default
+  even enableCredentials wont help
+  so login will work, but calling other apis authenticated with session cookie wont work
+  hashed session id will be there in request header but jsessionid cookie will be absent
+  server needs both of these to validate the request hence wont work  
+  
+- Hence using session cookie is not good enough for token authentication where cross origin domains exist  
+  in web applications that is running in same origin session cookie based token authentication is good
+  but in modern web application F.E and B.E are in different origins 
+  hence we must learn token authentication without cookies
+  
+- Authentication token is passed in header and validated on each request
+  must be fast hence we can use distributed session store like redis
+  Redis in memory store is fast and have expiry feature 
+  simple data structure, very fast, expiry enabled makes it perfect fit for auth token storage
+  
+  Which data storage to choose for storing token data (earlier stored in session cookie)
+  a. Redis: simple, fast , scalable, expiry feature already present
+  b. RDBMS: when traffice is low: req/res will count will be less can use this 
+     but need to implement expiry thing with query to fetch valid session token only
+	 
+- Possible Threats/vulnearbilities while using non cookie based token
+a. on client we store the token in local storage like redux etc in browser
+   using XSS attacker can gain access of this token from local storage
+   XSS injection is still possible
+b. in token storage if we use RDBMS it can cause SQL injection attack
+    in redis we are comparatively safe
+   but attacker can access redis and misuse token if redis is not secured
+    Redis should be TLS secured + password enabled
+
+- Since we already covered XSS and SQL injection we must follow those practises here also	
+  Here we can focus on issues arises when attacker steals token store like redis/db access 
+  To solve this we can use hmac to authenticate the user and data integrity
+  we will hmac the token with specific format and use private secret key(not to be shared)  
+  this way even if some one hacks the token store still it can not use it
+  because hmac secret key and rule to create mesasge is not known by hacker
+  
+- In code we have hardcoded the secret key and encryption keys that is bad
+  as bot can crawl the code and get these
+  better to store in seperate file outside code
+ a. Keep secret outside the code constants and move in configuration file like yaml , properties etc
+ b. do not commit this file in git as hacker can scan from there
+ c. keep the content as encrypted in storage
+ d. use kms tools in cloud or on premise like hashicorp vault 
+
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+- Storing tokens in session store on server side is convenient
+  however there are some maintainace cost in that: eg redis cluster cost
+  Hence we can use stateless tokens that gets rid of  session store  
+  -> stateless token means we do not store session store neither in cookie or any other data base or cache store
+  
+- During succesful login we can send the stateless token to the client it can store it and pass as header 
+ for server side authorization and authentication
+ all the data to validate the client will be present on this token itself
+ Since alldata to understand , authenticate and authorize is present on this stateless token, 
+   -> no need of having token store as seperate cluster/node
+- There is a standard way of creating stateless token : using JWT or json web token
+  JWT is just a string containing three parts seperated by '.'
+  Header.Payload.Signature
+  Header : JSON object containing fields like algorithm used for encryption in Signature object
+           this specific object is base64 encoded string, after decoding we can view the JSON
+  Payload: Payload is the actual data in JSON format in plain way, this JSON is base 64 encoded
+  Signature: Base64_encode(encryptionAlgoAsPerHeader(Base64_encode(Header) + "." Base64(Payload), Secret_key)))
+  for hmacc we will have hmac algo that needs secret_key  
+  hence anyone can not understand the signature until they have secret key: hence JWT is secure
+  
+- Since JWT is a standard for different use cases specific field exists for header and payload
+  not neccessary to use all of them
+ but it is good practise to use these fields if needed in project 
+ hence same field will exist across project for standardization and new dev will easily understand it
+ we can add our own fields
+ 
+ OOB JWT standard fields for headers:
+  { "typ": "JWT"
+    "alg" : "HMC256"
+	"kid" : "" , on server we can store multiple secret keys
+	   , we can have entry mapping with this data as key and value as actual secret key
+   	   so that we can manage multiple secret keys
+   "jwk" : bad to use : hacker will get secret key and data will be lost	
+   "jku" : url of the secret key: acn also be dangerous if key is on cloud or public network
+  if the secret key is intercepted any hacker can create JWT tokens and do DOS attack easily
+  hence secret key must be extremely secured and roatated
+  Question: Why not send the jwk and use https, as interceptor wont be able to decrypt the data
+  it is because the hacker can actually use website and using browser get this data from his local browser
+  hence it should be https enabled + hmac encrypted with completely safe secret key
+  
+  OOB JWT standard fields for payload: aka payload claims (payload json field is aka payload claims)
+  {
+   "iss"  // issuer of the token
+   "sub" : //subject
+   "aud" : //audience to recieve token
+   "exp" : //expiry time of token in EPOCH
+   "nbf" : //jwt valid start time 
+   "iat" : //issued at time
+   "jti" : //jwd id : unique id for each unique JWT
+   
+   //custom private claims
+   // "role"
+   
+   also just like header fields , we can also create custom payload fields/claims
+  }  
+	  
+- Threat in JWT : in 2015 tim mclean found vulnriblities in JWT libraries that on changing the headers hacker was able to change algo
+  not just that hacker changed the header in a way to make none algo meaning no validation was done by jwt library	  
+ 
+- Remember JWT token validation ensures no use of state store
+  so we do not have feature to logout before the token expires
+  in the case of redis store/ session cookie token validation we sored the token so we could remove it
+  after expiry time and logout initiated token can be removed from token store
+  but in case of JWT since the token store do not exist we can not remove them before actual expiry time
+  hence logout can not actually remove the token
+
+- JWT threat prevention
+a. Do not use caesar based encryption or similar weak encryption for signature creation 
+    better use hmac 256 or similar powerful and secured algo
+b. use security library from trusted source and do regular secret key updates	
+c. in pure JWT implementation there is no token store so keep expiry time less 
+    since user can not manually logout using pure JWT
+d. use hybrid JWT token for logoutable JWT
+   here JWT is also stored on server state store, so logout before actual expiry is possible
+e. in case HMAC key is leaked we can revoke/remove all the token present on this session store  
+
+- JWT is a common term , it is just a specification and have different implementation
+  what we have implemented is JWS: json web signature
+  Types of implementations:
+  JWS : json web signature, most common implementation, when people say JWT most common it means JWS
+   in this the header and payload is just bas64 encoded
+   what if there is some sensitive data field in payload's claim or header, like apiKey
+   hacker can intercept it over network and read the sensitive data
+  JWE : json web encryption
+  consist of 5 parts : first part is also header just like first part of JWS
+  In this the aim is to encrypt even header and payload claims
+  so that sensitive data can be passed as part of header fields and payload claims in ecnrypted way
+  so hacker intercepting the data can not read it unlike normal base64 encoding
+  5 parts of JWE
+  header(aka JOSE) . encrypted key . initializing vector . authentication tag
+   
+- Not all JWT libraries support JWE , auth0 support JWS but not JWE
+  whiile using jwe debugger we can not decrypt JWE token   

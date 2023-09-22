@@ -8,6 +8,12 @@ public class SaltGenerator {
         RANDOM.nextBytes(salt);
         return bytesToHex(salt);
     }
+    
+    public static String generateSaltHex(int size) {
+        byte[] salt = new byte[size]; // 16 bytes is a common size for salt
+        RANDOM.nextBytes(salt);
+        return bytesToHex(salt);
+    }
 
     public static String bytesToHex(byte[] bytes) {
         StringBuilder hexString = new StringBuilder(2 * bytes.length);

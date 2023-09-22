@@ -1,9 +1,15 @@
 package com.learning.springsecurity.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 
 import lombok.Data;
@@ -27,4 +33,24 @@ public class BasicAuthUser {
 	private String salt;
 	
 	private String displayName;
+	
+	@ManyToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST}, 
+			//if we do n set mapped by here , it will create two table one project_progarmmer and another programmer_projects
+			//mapped by ignores table creation form this entity side
+			mappedBy = "users", fetch = FetchType.EAGER
+			)
+	private List<BasicAclUri> aclUris;
+	
+	public void addAcl(BasicAclUri aclUri, boolean updateOnBothEntities) {
+		if (aclUri == null) {
+			return;
+		}
+		if (aclUris == null) {
+			aclUris = new ArrayList<>();
+		}
+		aclUris.add(aclUri);
+		if (updateOnBothEntities) {
+			aclUri.addUser(this, false);
+		}
+	}
 }
