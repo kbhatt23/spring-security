@@ -778,4 +778,36 @@ e. in case HMAC key is leaked we can revoke/remove all the token present on this
   header(aka JOSE) . encrypted key . initializing vector . authentication tag
    
 - Not all JWT libraries support JWE , auth0 support JWS but not JWE
-  whiile using jwe debugger we can not decrypt JWE token   
+  whiile using jwe debugger we can not decrypt JWE token
+  
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+- JWT is good approach for authentication but sometimes we need simpler approach, as JWT is complex
+  JWT is complex to implement on server and client side both and tougher to understand
+  when we need simpler approach of authentication we can use API key
+
+- An API key is nothing but a simple alphanumeric string that can be passed with request for authentication 
+  it can be passed as request param or request path variable but both approach is bad
+  it is because browser can store this and on public computer this can be exposed
+  better to attach as custom header in request
+  Typically API keys are long lived and hence can be a security threat if it is stolen by hacker
+  hence we must use API key along with additional layer like IP whitelisting and other netwrok level security
+   + ACL
+
+   
+- Every company wants to provide REST APIs which is highly secure but still want many consumers to access them
+  also ease of access shoule be good along with high security: thats the goal 
+  earlier we used to provide username/password for authentication
+  but oauth came so that password need not to be shared for accessing rest apis
+  oauth allows restricted access to secured resources, without giving password
+  
+- grant types in oauth 2.0
+a. authorization code
+b. implicit: same as authorization code, 
+  however client application recieve access token once resource site redirect to client site
+c. password : client itself ask for username/password both, not good
+   but this is used whem client is front end : either this or PKCSE approach
+   in PKCSE client is F.W app like web browser or ios/android app that can not store client secret
+   in password also client is F.E hence client secret can not eb stored there
+   so back end server save the client id and secret and do oauth flows for F.E   
