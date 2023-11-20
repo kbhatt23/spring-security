@@ -20,7 +20,7 @@ a. SQL Injection Threat
   Application might not know safe and unsafe inputs and since it is created dynamically based on user input
   unsafe sql will still get executed and cause issue
   eg: an API takes SQL from client and run it
-  very dangerous as instead of selec query client can send delete query
+  very dangerous as instead of select query client can send delete query
   Note: Remember using framework does not mean application is safe from SQL Injection Threat
   In summary never use SQL string to be fetched directly from api input
   Also it is very dangerous to create sql using string append as user can send dangerous input
@@ -43,8 +43,8 @@ a. SQL Injection Threat
   like it can check for mysql/postgres sql version, view all the tables and their schemas
   even drop the table : woof
   even though the endpoint is https request body can still be seen by the browser client
-  if hacker runs an app, and in netwrok tab see any sql query passed from browser F.E to API
-  he can understand that there is chance of weakness in terms of sql injection  
+  if hacker runs an app, and in network tab see any sql query passed from browser F.E to API
+  he can understand that there is chance of weakness in terms of sql injection 
   
 - If we use jdbcTemplate with dynamic sql string creation with input from request api either in
   path param, request param, headers or request body is very dangerous
@@ -58,7 +58,7 @@ but if we are using @Query to call custom SQL that is dynamic can be dangerous
 om shree ganeshaya namah
 om shree sita rama lakshman hanuman
 
-- Safe way to avoid SQL Injection is using prepared statements instead od using string sql with dynamic append
+- Safe way to avoid SQL Injection is using prepared statements instead of using string sql with dynamic append
   a prepared stament is staement with placeholders like ? and that gets populated with user input
   It means the sql statement can not be modified only the placeholders are modified
   In case of sql append string complete sql can be modified as a string
@@ -104,7 +104,7 @@ om shree sita rama lakshman hanuman
   
 - Best way to implement security is to do in multiple layers
   if one layer got penetrated another layer can save it
-  limit the damage in worst case
+  limit the damage in worst case: it is also known as defence in depth
 
 - Different penetration layers to be safe from sql injection
 code level
@@ -124,7 +124,7 @@ om shree ganeshaya namah
 om shree sita rama lakshman hanuman
 
 - XSS aka cross site scripting is a web application security threat where malicious code is run on web application
-  bad site/hacker inject malicious code like java script and run on web applicationin the browser
+  bad site/hacker inject malicious code like java script and run on web application in the browser
   this malicious script code might be running in browser without user knowing it in the background
   one common example:
   a. the java sript code runs on browser (malicious) query the cookie and get authorization token
@@ -193,7 +193,7 @@ b. opening malicious websites
    X-XSS-protection: 0
    X-Conten-Type-Options: nosniff : so that browser do not predict response data type 
        instead forcefully use response header content-type to parse the body
-	   this way we an ensure that body is paresed to json/xml and hence wont be executed on browser as script
+	   this way we an ensure that body is parsed to json/xml and hence wont be executed on browser as script
   
    Content-Security-Policy
   This header forces what all scripts can be run and where : this can make our system more secure in browser
@@ -230,14 +230,14 @@ om shree sita rama lakshman hanuman
 
 - Any external call comes via firewall
   Firewall is of 2 types: 
-  a. netwrok firewall: security on netwrok layer like same vpc outside vpc etc
+  a. network firewall: security on netwrok layer like same vpc outside vpc etc
   b. WAF: web application firewall : provides security on http layer for http applications
   
 Flow
   
  external client ->        network firewall ->           WAF ->                     API gateway                    ->               APIs                                
   
-  external system VPC    provide netwrok 
+  external system VPC    provide network 
                         vpc level security              web based and http     more security like authentication
 						like xternal or internal         security              token, rate limiting etc   
 						vpc based on security group                             load balacing among api instances
@@ -258,7 +258,7 @@ om shree sita rama lakshman hanuman
 - Unlike SQL injection and XSS DOS do not make use of weakness in code
 - Even to execute very simple basic code it require some bit of resource
   To Server a request API code might need below resources
-  CPU utilization, RAM , har disk space, Socket/Network I/O for external APIs,D.Bs etc, Server Threads
+  CPU utilization, RAM , hard disk space, Socket/Network I/O for external APIs,D.Bs etc, Server Threads
   In DOS attack so many requests are called concurrently that all these resources are eaten up
   which causes legitimate users to either have slowness or complete timeout causing complete deny of service
   also DOS can cause complete shutdown of servers causing complete downtime  
@@ -313,7 +313,7 @@ c. Use Pagination:
 - Hash is a security concern
   used for data integrity in form of checksum/signature
   if some part of data is changed we can know that it is changed, but what part of data is changed we can not know
-  unclike encryption in hash we can not get back the original data
+  unlike encryption in hash we can not get back the original data
   we can only identify if data is changed or not as it is checksum/signature based, original data can not be retrieved  
   Result of hash function is a string that has following features
 a. if 2 identical data is hashed using same hash function then hash string will be identical
@@ -422,7 +422,7 @@ om shree sita rama lakshman hanuman
   hacker can intercept it and see the details using some packet sniffing tools
   this is called packet sniffing  
   
-  -> IF api was https based then hacker can intercept the data but can not decrypt and understand it
+  -> If api was https based then hacker can intercept the data but can not decrypt and understand it
 
 - How to setup HTTPS on server
   install TLS/SSL certificate on server side shared by Certificate authority
@@ -433,7 +433,7 @@ om shree sita rama lakshman hanuman
   
 - In production it is not good practise to install ssl in each microservice deployed across multiple servers/machines
   better to install in Load balaner/API gateway level and it can show https layer for outside traffice
-  and internally Load balaner/API gateway calls API using http via internal netwrok within private VPCs 
+  and internally Load balaner/API gateway calls API using http via internal network within private VPCs 
   
 - Best practises for HTTPS:
 a. Always expose APIs over HTTPS
@@ -611,7 +611,7 @@ om shree sita rama lakshman hanuman
   even if protocol changes or domain changes or even port changes it wont work by default 
   
 - In CORS browser first send a small request with same signature to API back end
-  if it fails it wont call the actual API otherwise calls the main AP with actual response
+  if it fails it wont call the actual API otherwise calls the main API with actual response
   this is called preflight request
   CORS is deeply explained in mozilla website
   Few important response headers for preflight and actual API calls related to CORS
@@ -778,7 +778,7 @@ e. in case HMAC key is leaked we can revoke/remove all the token present on this
   header(aka JOSE) . encrypted key . initializing vector . authentication tag
    
 - Not all JWT libraries support JWE , auth0 support JWS but not JWE
-  whiile using jwe debugger we can not decrypt JWE token
+  while using jwe debugger we can not decrypt JWE token
   
 om shree ganeshaya namah
 om shree sita rama lakshman hanuman
@@ -797,7 +797,7 @@ om shree sita rama lakshman hanuman
 
    
 - Every company wants to provide REST APIs which is highly secure but still want many consumers to access them
-  also ease of access shoule be good along with high security: thats the goal 
+  also ease of access should be good along with high security: thats the goal 
   earlier we used to provide username/password for authentication
   but oauth came so that password need not to be shared for accessing rest apis
   oauth allows restricted access to secured resources, without giving password

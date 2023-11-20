@@ -1,0 +1,25 @@
+app:
+  name: mongo-injection
+  log-file-path: C:/Kanishk/learning/spring-security/spring-security/Ali Gelenler Course/secure-coding/mongo-injection/logs/mongo-injection.log
+
+server:
+  port: 8182
+
+logging:
+  level:
+    root: INFO
+    com.learning: INFO
+
+mongodb:
+  host: localhost
+  port: 27017
+  database: injection
+  username: mongoroot
+  password: mongosecret
+  
+spring:
+  data:
+    mongodb:
+      url: mongodb://${mongodb.username}:${mongodb.password}@${mongodb.host}:${mongodb.port}/${mongodb.database}?authSource=admin
+      
+      authentication-database: admin

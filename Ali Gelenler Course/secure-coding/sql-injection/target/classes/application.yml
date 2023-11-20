@@ -1,0 +1,33 @@
+app:
+  name: sql-injection
+  log-file-path: C:/Kanishk/learning/spring-security/spring-security/Ali Gelenler Course/secure-coding/sql-injection/logs/sql-injection.log
+
+server:
+  port: 8181
+  servlet:
+    session:      cookie:        http-only: true
+#cookie can be stolen using log injection xss
+#to make log xss injection free then use it true
+
+logging:
+  level:
+    root: INFO
+    com.learning: INFO
+
+spring:
+  jpa:
+    open-in-view: false
+    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQL9Dialect
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQL9Dialect
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=injection&binaryTransfer=true&reWriteBatchedInserts=true
+    username: admin
+    password: secret
+    driver-class-name: org.postgresql.Driver
+  sql:
+    init:
+      mode: ALWAYS
+      schema-locations: classpath:init-schema.sql,classpath:init-data.sql        platform: postgres  application:    name: sql-injection

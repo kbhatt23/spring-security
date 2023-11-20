@@ -1,0 +1,82 @@
+version: "3.7"
+
+services:
+
+  mongodb:
+    image: mongo:3.6
+    container_name: mongodb
+    restart: always    
+    hostname: mongodb
+    ports:
+      - 27017:27017
+    networks:
+      - mongo-network  
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongoroot
+      - MONGO_INITDB_ROOT_PASSWORD=mongosecret
+    volumes:
+      - mongo-data:/data/db
+
+  compass:
+    image: mongo-express:1.0.0
+    container_name: compass
+    restart: always    
+    hostname: compass
+    ports:
+      - 8081:8081
+    networks:
+      - mongo-network  
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=mongoroot
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=mongosecret
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+    depends_on:
+      - mongodb  
+  postgres:
+    image: 'postgres:12.2'
+    restart: always
+    container_name: postgres
+    hostname: postgres
+    environment:
+      POSTGRES_DB: order
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - 'db-data:/var/lib/postgresql/data'
+    ports:
+      - '5432:5432'
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    hostname: pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: kanishklikesprogramming@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: jaishreeram
+    volumes:
+      - 'pgadmin-data:/var/lib/pgadmin'
+    ports:
+      - '9092:80'
+    depends_on:
+      - postgres
+  openldap:
+    image: 'osixia/openldap:1.5.0'
+    restart: always
+    container_name: openldap
+    hostname: openldap
+    volumes:
+      - 'openldap-data:/container/service/slapd/assets/test'
+    ports:
+      - '389:389'
+      - '636:636'       
+      
+
+volumes:
+  db-data:
+  pgadmin-data:
+  mongo-data:
+  openldap-data:
+
+networks:
+  mongo-network:

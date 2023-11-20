@@ -1,0 +1,44 @@
+[
+  {
+    "_class": "com.learning.mongoinjection.collections.UserDocument",
+    "id":1,
+    "userName":"admin1",
+    "password":"admin1!",
+    "name":"Admin",
+    "surname":"User"
+  },
+  {
+    "_class": "com.learning.mongoinjection.collections.UserDocument",
+    "id":2,
+    "userName":"user1",
+    "password":"user1!",
+    "name":"Test",
+    "surname":"User"
+  },
+  {
+    "_class": "com.learning.mongoinjection.collections.UserDocument",
+    "id":3,
+    "userName":"user2",
+    "password":"user2!",
+    "name":"Test2",
+    "surname":"User"
+  },
+  {
+    "_class": "com.learning.mongoinjection.collections.UserRoleDocument",
+    "id":1,
+    "userId":1,
+    "role":"ADMIN"
+  },
+  {
+    "_class": "com.learning.mongoinjection.collections.UserRoleDocument",
+    "id":2,
+    "userId":2,
+    "role":"USER"
+  },
+  {
+    "_class": "com.learning.mongoinjection.collections.UserRoleDocument",
+    "id":3,
+    "userId":3,
+    "role":"USER"
+  }
+]

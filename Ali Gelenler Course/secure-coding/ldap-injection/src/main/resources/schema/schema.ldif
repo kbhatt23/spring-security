@@ -1,0 +1,81 @@
+# Organizational Units
+dn: ou=users,dc=example,dc=org
+objectClass: top
+objectClass: organizationalUnit
+ou: users
+
+dn: ou=groups,dc=example,dc=org
+objectClass: top
+objectClass: organizationalUnit
+ou: groups
+
+# Groups
+dn: cn=USER,ou=Groups,dc=example,dc=org
+objectClass: top
+objectClass: posixGroup
+gidNumber: 100
+
+dn: cn=ADMIN,ou=Groups,dc=example,dc=org
+objectClass: top
+objectClass: posixGroup
+gidNumber: 101
+
+# Users
+dn: uid=admin1,ou=users,dc=example,dc=org
+uid: admin1
+uidNumber: 11
+gidNumber: 101
+givenName: admin1
+sn: user
+cn: admin1 user
+objectClass: top
+objectClass: posixAccount
+objectClass: inetOrgPerson
+homeDirectory: /home/admin
+userPassword: admin1!
+mail: admin1@example.com
+
+dn: uid=user1,ou=users,dc=example,dc=org
+uid: user1
+uidNumber: 12
+gidNumber: 100
+givenName: user1
+sn: user
+cn: user1 user
+objectClass: top
+objectClass: posixAccount
+objectClass: inetOrgPerson
+homeDirectory: /home/user1
+userPassword: user1!
+mail: user1@example.com
+
+dn: uid=user2,ou=Users,dc=example,dc=org
+uid: user2
+uidNumber: 13
+gidNumber: 100
+givenName: user2
+sn: user
+cn: user2 user
+objectClass: top
+objectClass: posixAccount
+objectClass: inetOrgPerson
+homeDirectory: /home/user2
+userPassword: user2!
+mail: user2@example.com
+
+# User Groups
+dn: cn=USER,ou=groups,dc=example,dc=org
+changetype: modify
+add: memberuid
+memberuid: user1
+
+dn: cn=USER,ou=groups,dc=example,dc=org
+changetype: modify
+add: memberuid
+memberuid: user2
+
+dn: cn=ADMIN,ou=groups,dc=example,dc=org
+changetype: modify
+add: memberuid
+memberuid: admin1
+

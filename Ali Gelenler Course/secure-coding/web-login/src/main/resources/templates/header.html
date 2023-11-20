@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Login to system</title>
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+</head>
+
+<body id="login">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-info" th:fragment="menu">
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/}"><p class="text-light bg-info float-left">Let's try some injections!</p></a>
+            </li>
+            <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()')}">
+                <a class="nav-link active" th:href="@{/home}">Home page</a>
+            </li>
+            <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()')}">
+                <div th:switch="${@environment.getProperty('app.name')}">
+                    <a th:case="mongo-injection" class="nav-link active" th:href="@{'/user_info?userId=' + '\'' + ${#authentication.principal.userId} + '\''}">Get user info</a>
+                    <a th:case="*" class="nav-link active" th:href="@{'/user_info?userId=' + ${#authentication.principal.userId}}">Get user info</a>
+                </div>
+            </li>
+            <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()')}">
+                <div th:if="${@environment.getProperty('app.name') == 'sql-injection'}">
+                    <a class="nav-link active" th:href="@{'/user-info-by-username?username=' + ${#authentication.principal.username}}">Get user info by username</a>
+                </div>
+            </li>
+            <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()')}">
+                <div th:if="${@environment.getProperty('app.name') == 'sql-injection'}">
+                    <div sec:authorize="hasRole('ROLE_ADMIN')">
+                        <a class="nav-link active" th:href="@{/log-data}">Application logs</a>
+                    </div>
+                </div>
+            </li>
+            <li class="nav-item" th:if="${#authorization.expression('isAuthenticated()')}">
+                <div th:if="${@environment.getProperty('app.name') == 'sql-injection'}">
+                    <div sec:authorize="hasRole('ROLE_USER')">
+                        <a class="nav-link active" th:href="@{'/user-detail?userId=' + ${#authentication.principal.userId}}">User detail</a>
+                    </div>
+                    <div sec:authorize="hasRole('ROLE_ADMIN')">
+                        <a class="nav-link active" th:href="@{/export-user-details}">Export user details</a>
+                    </div>
+                </div>
+            </li>
+        </ul>
+
+        <div class="row">
+            <div class="col-12" th:if="${#authorization.expression('isAuthenticated()')}">
+                <p class="text-light bg-info float-right">Welcome, <span th:text="${#authentication.principal.username}"/>!</p>
+            </div>
+            <form class="col-12" method="post" th:action="@{/logout}" th:if="${#authorization.expression('isAuthenticated()')}">
+                <button id="logout-button" type="submit" class="btn btn-danger float-right">Logout</button>
+            </form>
+        </div>
+
+    </div>
+</nav>
+
+
+</body>

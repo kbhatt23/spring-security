@@ -1,0 +1,46 @@
+<div th:replace="header"></div>
+
+<div class="container center">
+    <form class="col-12" action="#" th:action="@{/user-detail}" th:object="${user_detail}" th:method="post">
+        <div class="form-group">
+            <h4>Enter User Detail</h4>
+            <input class="form-control" type="hidden" th:field="*{id}" id="id" name="id">
+            <input class="form-control" type="hidden" id="userId" name="userId" th:value="${#authentication.principal.userId}">
+            <input class="form-control" type="text" th:field="*{address}" id="address" name="address" placeholder="Enter address">
+            <input class="form-control" type="text" th:field="*{creditCardNo}" id="creditCardNo" name="creditCardNo" placeholder="Enter credit card no">
+            <textarea class="form-control"  th:field="*{comment}" id="comment" name="comment" placeholder="Enter comment" rows="3"></textarea>
+            <div class="text-center mt-5">
+                <input class="btn btn-dark" type="submit" value="Save">
+            </div>
+        </div>
+        <div th:if="${user_detail != null}">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th scope="col">id</th>
+                    <th scope="col">user id</th>
+                    <th scope="col">address</th>
+                    <th scope="col">credit card no</th>
+                    <th scope="col">comment</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <th scope="row" th:text="${user_detail.id}"></th>
+                    <td th:text="${user_detail.userId}"></td>
+                    <td th:text="${user_detail.address}"></td>
+                    <td th:text="${user_detail.creditCardNo}"></td>
+                    <td th:text="${user_detail.comment}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-5" th:if="${error != null}">
+            <ul>
+                <li th:text="'Error: ' + ${error}"></li>
+            </ul>
+        </div>
+    </form>
+</div>
+
+<div th:replace="footer"></div>

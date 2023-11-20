@@ -1,0 +1,24 @@
+server:
+  port: 8183
+
+app:
+  name: ldap-injection
+  log-file-path: C:/Kanishk/learning/spring-security/spring-security/Ali Gelenler Course/secure-coding/ldap-injection/logs/ldap-injection.log
+
+logging:
+  level:
+    root: INFO
+    com.learning: INFO
+
+ldap:
+  url: ldap://localhost:389/
+  base.dn: dc=example,dc=org
+  username: cn=admin,${ldap.base.dn}
+  password: admin
+
+spring:
+  ldap:
+    urls: ${ldap.url}
+    base: ${ldap.base.dn}
+    username: ${ldap.username}
+    password: ${ldap.password}
